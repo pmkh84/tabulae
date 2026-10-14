@@ -85,7 +85,7 @@ export async function deleteProduct(id, accessToken) {
   return await response.json();
 }
 
-export async function getCategories(accessToken, limit = 100, offset = 0) {
+export async function getCategoryPage(accessToken, limit = 100, offset = 0) {
   const url = new URL(`${API_URL}/categories`);
   url.searchParams.append("limit", limit);
   url.searchParams.append("offset", offset);
@@ -96,8 +96,45 @@ export async function getCategories(accessToken, limit = 100, offset = 0) {
     },
   });
 
-  const data = await response.json();
-  return data.data || [];
+  return await response.json();
+}
+
+// Retain the array-returning helper used by existing category-management pages.
+export async function getCategories(accessToken, limit = 100, offset = 0) {
+  return (await getCategoryPage(accessToken, limit, offset)).data || [];
+}
+
+const categoryRequests = new Map();
+
+// Share only concurrent loads. Do not cache category data or credentials after completion.
+export function getAllProductCategories(accessToken) {
+  if (categoryRequests.has(accessToken)) return categoryRequests.get(accessToken);
+  const request = collectCategoryPages(accessToken).finally(() => categoryRequests.delete(accessToken));
+  categoryRequests.set(accessToken, request);
+  return request;
+}
+
+async function collectCategoryPages(accessToken) {
+  const categories = [], ids = new Set();
+  let offset = 0, total;
+  do {
+    const page = await getCategoryPage(accessToken, 100, offset);
+    if (!page || !Array.isArray(page.data) || !Number.isSafeInteger(page.total) || page.total < 0 ||
+        page.offset !== offset || page.limit !== 100 || (total !== undefined && page.total !== total) ||
+        page.data.length !== Math.min(100, Math.max(0, page.total - offset))) {
+      throw new LocalizedApiError(null, 502);
+    }
+    total = page.total;
+    for (const category of page.data) {
+      if (!Number.isSafeInteger(category.id) || category.id <= 0 || ids.has(category.id)) {
+        throw new LocalizedApiError(null, 502);
+      }
+      ids.add(category.id);
+      categories.push(category);
+    }
+    offset += page.data.length;
+  } while (offset < total);
+  return categories;
 }
 
 export async function productBulkStatus(ids, is_active, accessToken) {

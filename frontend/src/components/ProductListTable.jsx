@@ -10,6 +10,7 @@ export default function ProductListTable({
   selectedIds,
   toggleSelected,
   toggleAll,
+  returnTo = "/products/list",
 }) {
 
   const { user, accessToken } = useAuth();
@@ -75,7 +76,7 @@ export default function ProductListTable({
               <td className="px-4 py-2 space-x-2">
                 <button
                   role="button"
-                  onClick={() => navigate(`/products/${product.id}`)}
+                  onClick={() => navigate(`/products/${product.id}`, { state: { productReturnTo: returnTo } })}
                   className="text-indigo-600 hover:underline"
                 >
                   {t("common.view")}
@@ -91,7 +92,7 @@ export default function ProductListTable({
                   <>
                     <button
                       role="button"
-                      onClick={() => navigate(`/products/${product.id}/edit`)}
+                      onClick={() => navigate(`/products/${product.id}/edit`, { state: { productReturnTo: returnTo } })}
                       className="text-indigo-600 hover:underline"
                     >
                       {t("common.edit")}

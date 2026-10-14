@@ -1,16 +1,15 @@
 import { errorMessage } from "../i18n/errors.js";
 import { t } from "../i18n/index.js";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import Pagination from "../components/Pagination";
 import {
   getProducts,
-  getCategories,
   productBulkStatus,
 } from "../api/products";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import ProductListTable from "../components/ProductListTable";
 import ExportCSVButton from "../components/ExportCSVButton";
 import { exportFilteredProductsCSV } from "../utils/export";
@@ -19,23 +18,30 @@ import SearchInput from "../components/SearchInput";
 import SelectFilter from "../components/SelectFilter";
 import ContainerFilters from "../components/ContainerFilters";
 import { showStatusSummary } from "../utils/showStatusSummary";
+import { useProductCategories } from "../hooks/useProductCategories.js";
+import ProductCategoryFeedback from "../components/ProductCategoryFeedback";
+import { productListContext, updateProductListQuery } from "../utils/productNavigation.js";
 
 export default function ProductList() {
   const [loadError, setLoadError] = useState("");
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchTerm, offset, isActive, selectedCategoryId } = productListContext(searchParams);
+  const changeQuery = (changes) => setSearchParams(updateProductListQuery(searchParams, changes), { replace: true });
+  const setOffset = (value) => changeQuery({ offset: value });
+  const returnTo = location.pathname + location.search;
+  const categories = useProductCategories(accessToken);
+  const requestVersion = useRef(0);
   const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [limit] = useState(10);
-  const [offset, setOffset] = useState(0);
+  const limit = 10;
   const [total, setTotal] = useState(0);
-  const [categories, setCategories] = useState([]);
-  const [isActive, setIsActive] = useState("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
+    const version = ++requestVersion.current;
     setIsLoading(true);
     try {
       setLoadError("");
@@ -47,48 +53,34 @@ export default function ProductList() {
         category_id: selectedCategoryId,
         is_active: isActive,
       });
-      setProducts(data || []);
-      setTotal(total || 0);
+      if (version !== requestVersion.current) return;
+      if (offset > 0 && offset >= total) {
+        setSearchParams(updateProductListQuery(searchParams, { offset: Math.max(0, Math.ceil(total / limit) - 1) * limit }), { replace: true });
+        return;
+      }
+      setProducts(data || []); setTotal(total || 0); setSelectedIds([]);
     } catch (error) {
-      setLoadError(errorMessage(error));
-      console.error("Failed to load products:", error);
+      if (version === requestVersion.current) {
+        setProducts([]); setTotal(0); setSelectedIds([]); setLoadError(errorMessage(error));
+      }
     } finally {
-      setIsLoading(false);
+      if (version === requestVersion.current) setIsLoading(false);
     }
-  };
+  }, [accessToken, offset, searchTerm, selectedCategoryId, isActive, searchParams, setSearchParams]);
 
   useEffect(() => {
     fetchProducts();
-  }, [searchTerm, limit, offset, accessToken, selectedCategoryId, isActive]);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoadError("");
-        const list = await getCategories(accessToken);
-        setCategories(list);
-      } catch (error) {
-        setLoadError(errorMessage(error));
-        console.error("Failed to load categories:", error);
-      }
-    };
-
-    fetchCategories();
-  }, [accessToken]);
+    return () => { requestVersion.current += 1; };
+  }, [fetchProducts]);
 
   useEffect(() => {
     document.title = t("breadcrumbs.productList");
   }, []);
 
   const handleDeleteFromList = (deletedId) => {
-    setProducts((prev) => {
-      const updated = prev.filter((p) => p.id !== deletedId);
-      if (updated.length === 0 && offset >= limit) {
-        setOffset(offset - limit);
-      }
-      return updated;
-    });
-    setTotal((prev) => prev - 1);
+    setSelectedIds((previous) => previous.filter((value) => value !== deletedId));
+    if (products.length === 1 && offset >= limit) setOffset(offset - limit);
+    else fetchProducts();
   };
 
   const toggleSelected = (id) => {
@@ -110,13 +102,15 @@ export default function ProductList() {
       <Navbar />
       <Breadcrumb />
       {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
+      {loadError && <button type="button" onClick={fetchProducts} className="px-6 text-sm text-indigo-600 hover:underline">{t("products.retry")}</button>}
       <div className="p-6 mx-auto space-y-6">
+        {location.state?.productFeedback === "created" && <p role="status" className="text-sm text-green-700">{t("products.created")}</p>}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.productList")}</h1>
           {user?.role === "admin" && (
             <button
               role="button"
-              onClick={() => navigate("/products/new")}
+              onClick={() => navigate("/products/new", { state: { productReturnTo: returnTo } })}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm"
             >
               {"+ " + t("navigation.createProduct")}
@@ -147,33 +141,30 @@ export default function ProductList() {
             placeholder={t("products.search")}
             value={searchTerm}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setOffset(0);
+              changeQuery({ search: e.target.value, offset: 0 });
             }}
           />
 
-          <SelectFilter
+          {categories.status === "ready" ? <SelectFilter
             label={t("common.category")}
             value={selectedCategoryId}
             onChange={(e) => {
-              setSelectedCategoryId(e.target.value);
-              setOffset(0);
+              changeQuery({ category_id: e.target.value, offset: 0 });
             }}
             options={[
               { value: "", label: t("products.allCategories") },
-              ...categories.map((cat) => ({
+              ...categories.data.map((cat) => ({
                 value: cat.id,
                 label: cat.name,
               })),
             ]}
-          />
+          /> : <ProductCategoryFeedback categories={categories} />}
 
           <SelectFilter
             label={t("common.status")}
             value={isActive}
             onChange={(e) => {
-              setIsActive(e.target.value);
-              setOffset(0);
+              changeQuery({ is_active: e.target.value, offset: 0 });
             }}
             options={[
               { value: "", label: t("common.all") },
@@ -246,9 +237,10 @@ export default function ProductList() {
         <div className="mt-4">
           {isLoading ? (
             <p className="text-sm text-gray-500">{t("products.loadingList")}</p>
-          ) : (
+          ) : loadError ? null : (
             <ProductListTable
               products={products}
+              returnTo={returnTo}
               onDelete={handleDeleteFromList}
               selectedIds={selectedIds}
               toggleSelected={toggleSelected}
@@ -257,12 +249,12 @@ export default function ProductList() {
           )}
         </div>
 
-        <Pagination
+        {!loadError && !isLoading && <Pagination
           total={total}
           limit={limit}
           offset={offset}
           onPageChange={(newOffset) => setOffset(newOffset)}
-        />
+        />}
       </div>
     </>
   );

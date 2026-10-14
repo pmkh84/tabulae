@@ -81,7 +81,7 @@ const getBreadcrumbLabel = (path) => {
   return null;
 };
 
-export default function Breadcrumb() {
+export default function Breadcrumb({ navigationState }) {
   const location = useLocation();
   const pathname = location.pathname;
 
@@ -137,7 +137,7 @@ export default function Breadcrumb() {
             {isLast || !path ? (
               <span aria-current="page">{t(label)}</span>
             ) : (
-              <Link to={path} className="opacity-60">
+              <Link to={path} state={navigationState} className="opacity-60">
                 {t(label)}
               </Link>
             )}
