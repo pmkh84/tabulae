@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState } from "react";
 import ErrorMessage from "./ErrorMessage";
 import { createCategory } from "../api/products";
@@ -10,7 +12,7 @@ export default function CreateInlineCategory({ onCategoryCreated }) {
 
   const handleAdd = async () => {
     if (!name.trim()) {
-      setError("Name is required");
+      setError(t("validation.required"));
       return;
     }
 
@@ -20,7 +22,7 @@ export default function CreateInlineCategory({ onCategoryCreated }) {
       setName("");
       setError("");
     } catch (e) {
-      setError(e.message || "Failed to create category");
+      setError(errorMessage(e) || t("errors.actionFailed"));
     }
   };
 
@@ -30,13 +32,13 @@ export default function CreateInlineCategory({ onCategoryCreated }) {
         htmlFor="category"
         className="block text-sm font-medium text-gray-700"
       >
-        Can't find the category?
+        {t("products.categoryHelp")}
       </label>
       <div className="flex gap-2">
         <input
           id="category"
           type="text"
-          placeholder="New category"
+          placeholder={t("products.newCategory")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="flex-1 border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -47,7 +49,7 @@ export default function CreateInlineCategory({ onCategoryCreated }) {
           onClick={handleAdd}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm"
         >
-          Add
+          {t("common.add")}
         </button>
       </div>
       <ErrorMessage message={error} />

@@ -1,3 +1,7 @@
+import { errorMessage } from "../i18n/errors.js";
+import { movementTypeLabel } from "../i18n/display.js";
+import { formatNumber, formatDate } from "../utils/format.js";
+import { t } from "../i18n/index.js";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import { useState, useEffect } from "react";
@@ -14,6 +18,7 @@ import SelectFilter from "../components/SelectFilter";
 import FilterContainer from "../components/ContainerFilters";
 
 export default function MovementList() {
+  const [loadError, setLoadError] = useState("");
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +38,7 @@ export default function MovementList() {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        setLoadError("");
         const { movements, total } = await getStockMovements({
           accessToken,
           filters: {
@@ -48,6 +54,7 @@ export default function MovementList() {
         setMovements(movements);
         setTotal(total);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Error loading movements:", error);
       } finally {
         setIsLoading(false);
@@ -72,22 +79,24 @@ export default function MovementList() {
       getUsers({ accessToken, limit: 50 })
         .then((res) => setUsers(res.data || []))
         .catch((err) => {
+          setLoadError(errorMessage(err));
           console.error("Error loading users:", err.message);
         });
     }
   }, [accessToken, user, isLoading]);
 
   useEffect(() => {
-    document.title = "Stock Movements List";
+    document.title = t("breadcrumbs.movementList");
   }, []);
 
   return (
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6 mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          Stock Movements List
+          {t("breadcrumbs.movementList")}
         </h1>
 
         <FilterContainer
@@ -106,7 +115,7 @@ export default function MovementList() {
                   },
                 })
               }
-              label="📤 Export CSV"
+              label={"📤 " + t("common.exportCSV")}
             />
           }
         >
@@ -115,7 +124,7 @@ export default function MovementList() {
               htmlFor="date-from"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              From date
+              {t("common.fromDate")}
             </label>
             <input
               id="date-from"
@@ -134,7 +143,7 @@ export default function MovementList() {
               htmlFor="date-to"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              To date
+              {t("common.toDate")}
             </label>
             <input
               id="date-to"
@@ -150,14 +159,14 @@ export default function MovementList() {
 
           {user?.role === "admin" && (
             <SelectFilter
-              label="User"
+              label={t("common.user")}
               value={userId}
               onChange={(e) => {
                 setuserId(e.target.value);
                 setOffset(0);
               }}
               options={[
-                { value: "", label: "All" },
+                { value: "", label: t("common.all") },
                 ...users.map((u) => ({ value: u.id, label: u.name })),
               ]}
               className="max-w-[180px]"
@@ -165,23 +174,23 @@ export default function MovementList() {
           )}
 
           <SelectFilter
-            label="Type"
+            label={t("common.type")}
             value={filterType}
             onChange={(e) => {
               setfilterType(e.target.value);
               setOffset(0);
             }}
             options={[
-              { value: "", label: "All" },
-              { value: "incoming", label: "Incoming" },
-              { value: "outgoing", label: "Outgoing" },
+              { value: "", label: t("common.all") },
+              { value: "incoming", label: t("notifications.incoming") },
+              { value: "outgoing", label: t("notifications.outgoing") },
             ]}
             className="max-w-[150px]"
           />
 
           <SearchInput
-            label="Search"
-            placeholder="Search by user..."
+            label={t("common.search")}
+            placeholder={t("stockMovements.searchUser")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -189,14 +198,14 @@ export default function MovementList() {
 
         <div className="overflow-auto bg-white shadow rounded">
           <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-            <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <thead className="bg-gray-50 text-start text-xs font-semibold text-gray-500">
               <tr>
-                <th className="px-4 py-2">ID</th>
-                <th className="px-4 py-2">Type</th>
-                <th className="px-4 py-2">User</th>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Lines</th>
-                <th className="px-4 py-2">Actions</th>
+                <th className="px-4 py-2">{t("common.id")}</th>
+                <th className="px-4 py-2">{t("common.type")}</th>
+                <th className="px-4 py-2">{t("common.user")}</th>
+                <th className="px-4 py-2">{t("common.date")}</th>
+                <th className="px-4 py-2">{t("common.lines")}</th>
+                <th className="px-4 py-2">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -206,7 +215,7 @@ export default function MovementList() {
                     colSpan={6}
                     className="px-4 py-4 text-center text-gray-500"
                   >
-                    Loading movements...
+                    {t("stockMovements.loadingList")}
                   </td>
                 </tr>
               ) : movements.length === 0 ? (
@@ -215,26 +224,26 @@ export default function MovementList() {
                     colSpan={6}
                     className="px-4 py-4 text-center text-gray-500"
                   >
-                    No movements found.
+                    {t("stockMovements.empty")}
                   </td>
                 </tr>
               ) : (
                 movements.map((mov) => (
                   <tr key={mov.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2">{mov.id}</td>
-                    <td className="px-4 py-2 capitalize">{mov.move_type}</td>
-                    <td className="px-4 py-2">{mov.user_name}</td>
+                    <td className="px-4 py-2"><bdi dir="ltr">{mov.id}</bdi></td>
+                    <td className="px-4 py-2 capitalize">{movementTypeLabel(mov.move_type)}</td>
+                    <td className="px-4 py-2"><bdi>{mov.user_name}</bdi></td>
                     <td className="px-4 py-2">
-                      {new Date(mov.created_at).toLocaleDateString()}
+                      {formatDate(mov.created_at)}
                     </td>
-                    <td className="px-4 py-2">{mov.lines?.length || 0}</td>
+                    <td className="px-4 py-2">{formatNumber(mov.lines?.length || 0)}</td>
                     <td className="px-4 py-2">
                       <button
                         role="button"
                         onClick={() => navigate(`/stock-movements/${mov.id}`)}
                         className="text-indigo-600 hover:underline text-sm"
                       >
-                        View
+                        {t("common.view")}
                       </button>
                     </td>
                   </tr>

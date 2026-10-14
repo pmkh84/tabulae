@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
@@ -19,6 +21,7 @@ import ContainerFilters from "../components/ContainerFilters";
 import { showStatusSummary } from "../utils/showStatusSummary";
 
 export default function ProductList() {
+  const [loadError, setLoadError] = useState("");
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -35,6 +38,7 @@ export default function ProductList() {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
+      setLoadError("");
       const { data, total } = await getProducts({
         accessToken,
         limit,
@@ -46,6 +50,7 @@ export default function ProductList() {
       setProducts(data || []);
       setTotal(total || 0);
     } catch (error) {
+      setLoadError(errorMessage(error));
       console.error("Failed to load products:", error);
     } finally {
       setIsLoading(false);
@@ -59,9 +64,11 @@ export default function ProductList() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        setLoadError("");
         const list = await getCategories(accessToken);
         setCategories(list);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Failed to load categories:", error);
       }
     };
@@ -70,7 +77,7 @@ export default function ProductList() {
   }, [accessToken]);
 
   useEffect(() => {
-    document.title = "Product List";
+    document.title = t("breadcrumbs.productList");
   }, []);
 
   const handleDeleteFromList = (deletedId) => {
@@ -102,16 +109,17 @@ export default function ProductList() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6 mx-auto space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-800">Product List</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.productList")}</h1>
           {user?.role === "admin" && (
             <button
               role="button"
               onClick={() => navigate("/products/new")}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm"
             >
-              + Create Product
+              {"+ " + t("navigation.createProduct")}
             </button>
           )}
         </div>
@@ -130,13 +138,13 @@ export default function ProductList() {
                   },
                 });
               }}
-              label="📤 Export CSV"
+              label={"📤 " + t("common.exportCSV")}
             />
           }
         >
           <SearchInput
-            label="Search"
-            placeholder="Search by name or SKU..."
+            label={t("common.search")}
+            placeholder={t("products.search")}
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -145,14 +153,14 @@ export default function ProductList() {
           />
 
           <SelectFilter
-            label="Category"
+            label={t("common.category")}
             value={selectedCategoryId}
             onChange={(e) => {
               setSelectedCategoryId(e.target.value);
               setOffset(0);
             }}
             options={[
-              { value: "", label: "All categories" },
+              { value: "", label: t("products.allCategories") },
               ...categories.map((cat) => ({
                 value: cat.id,
                 label: cat.name,
@@ -161,16 +169,16 @@ export default function ProductList() {
           />
 
           <SelectFilter
-            label="Status"
+            label={t("common.status")}
             value={isActive}
             onChange={(e) => {
               setIsActive(e.target.value);
               setOffset(0);
             }}
             options={[
-              { value: "", label: "All" },
-              { value: "true", label: "Active" },
-              { value: "false", label: "Inactive" },
+              { value: "", label: t("common.all") },
+              { value: "true", label: t("common.active") },
+              { value: "false", label: t("common.inactive") },
             ]}
           />
         </ContainerFilters>
@@ -193,14 +201,14 @@ export default function ProductList() {
                   await fetchProducts();
                 } catch (error) {
                   alert(
-                    error.message ||
-                    "Failed to activate selected products"
+                    errorMessage(error) ||
+                    t("errors.actionFailed")
                   );
                 }
               }}
               className="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-sm"
             >
-              Activate selected
+              {t("common.activateSelected")}
             </button>
             <button
               role="button"
@@ -223,21 +231,21 @@ export default function ProductList() {
                   await fetchProducts();
                 } catch (error) {
                   alert(
-                    error.message ||
-                    "Failed to deactivate selected products"
+                    errorMessage(error) ||
+                    t("errors.actionFailed")
                   );
                 }
               }}
               className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm"
             >
-              Deactivate selected
+              {t("common.deactivateSelected")}
             </button>
           </div>
         )}
 
         <div className="mt-4">
           {isLoading ? (
-            <p className="text-sm text-gray-500">Loading products...</p>
+            <p className="text-sm text-gray-500">{t("products.loadingList")}</p>
           ) : (
             <ProductListTable
               products={products}

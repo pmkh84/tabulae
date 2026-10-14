@@ -1,37 +1,28 @@
+import { apiFetch } from "../i18n/errors.js";
 import API_URL from "./config";
 
 export async function getSemaphore(accessToken) {
-  const response = await fetch(`${API_URL}/stock/semaphore`, {
+  const response = await apiFetch(`${API_URL}/stock/semaphore`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch semaphore state.");
-  }
 
   return await response.json(); // { no_expiration, expiring_soon, expired }
 }
 
 export async function getWarehouseDetail(accessToken) {
-  const response = await fetch(`${API_URL}/stock/warehouses/detail`, {
+  const response = await apiFetch(`${API_URL}/stock/warehouses/detail`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch warehouse detail.");
-  }
-
   return await response.json();
 }
 
 export async function getProductsByWarehousePieChart(warehouseId, accessToken) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/warehouse/${warehouseId}/detail`,
     {
       headers: {
@@ -40,16 +31,11 @@ export async function getProductsByWarehousePieChart(warehouseId, accessToken) {
     }
   );
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch products by warehouse.");
-  }
-
   return await response.json();
 }
 
 export async function getProductHistory(productId, accessToken, limit = 10, offset = 0) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/product/${productId}/history?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -57,11 +43,6 @@ export async function getProductHistory(productId, accessToken, limit = 10, offs
       },
     }
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch product history.");
-  }
 
   return await response.json();
 }
@@ -73,7 +54,7 @@ export async function getProductHistoryByWarehouse(
   limit = 100,
   offset = 0
 ) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/warehouse/${warehouseId}/product/${productId}/history?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -81,11 +62,6 @@ export async function getProductHistoryByWarehouse(
       },
     }
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch product history.");
-  }
 
   return await response.json();
 }
@@ -95,44 +71,31 @@ export async function getStockByProduct(productId, accessToken, limit = 10, offs
   url.searchParams.append("limit", limit);
   url.searchParams.append("offset", offset);
 
-  const response = await fetch(url.toString(), {
+  const response = await apiFetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch stock by product.");
-  }
 
   return await response.json();
 }
 
 export async function getStockByCategory(accessToken) {
-  const res = await fetch(`${API_URL}/stock/product-categories`, {
+  const res = await apiFetch(`${API_URL}/stock/product-categories`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch stock by category.");
-  }
 
   return await res.json();
 }
 
 export async function getProductsByCategory(categoryId, accessToken) {
-  const res = await fetch(`${API_URL}/stock/category/${categoryId}/products`, {
+  const res = await apiFetch(`${API_URL}/stock/category/${categoryId}/products`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch products by category.");
-  }
 
   return await res.json();
 }
@@ -144,7 +107,7 @@ export async function getProductStockByWarehouse(
   limit = 10,
   offset = 0
 ) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/warehouse/${warehouseId}/product/${productId}?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -152,11 +115,6 @@ export async function getProductStockByWarehouse(
       },
     }
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch product stock by warehouse.");
-  }
 
   return await response.json();
 }
@@ -167,7 +125,7 @@ export async function getStockByWarehouse(
   limit = 10,
   offset = 0
 ) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/warehouse/${warehouseId}?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -175,11 +133,6 @@ export async function getStockByWarehouse(
       },
     }
   );
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch stock by warehouse.");
-  }
 
   return await response.json();
 }
@@ -190,7 +143,7 @@ export async function getWarehouseHistory(
   limit = 100,
   offset = 0
 ) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/warehouse/${warehouseId}/history?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -199,16 +152,11 @@ export async function getWarehouseHistory(
     }
   );
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch warehouse history.");
-  }
-
   return await response.json();
 }
 
 export async function getAvailableLots({ productId, warehouseId, accessToken }) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock/available-lots?product=${productId}&warehouse=${warehouseId}`,
     {
       headers: {
@@ -216,10 +164,6 @@ export async function getAvailableLots({ productId, warehouseId, accessToken }) 
       },
     }
   );
-
-  if (!response.ok) {
-    throw new Error("Failed to load available lots.");
-  }
 
   return await response.json(); // [{ lot, expiration_date, quantity }]
 }
@@ -245,16 +189,11 @@ export async function getExpirationProducts({
   url.searchParams.append("limit", limit);
   url.searchParams.append("offset", offset);
 
-  const response = await fetch(url.toString(), {
+  const response = await apiFetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch products by expiration.");
-  }
 
   return await response.json();
 }

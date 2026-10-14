@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -17,7 +19,7 @@ export default function NewWarehouse() {
   const validate = () => {
     const newErrors = {};
     if (!name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = t("validation.required");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -30,17 +32,17 @@ export default function NewWarehouse() {
 
     try {
       await createWarehouse({ name: name }, accessToken);
-      alert("Warehouse successfully created");
+      alert(t("warehouses.created"));
       navigate("/warehouses/list");
     } catch (error) {
-      alert(error.message || "Error creating warehouse");
+      alert(errorMessage(error) || t("errors.actionFailed"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
-    document.title = "New Warehouse";
+    document.title = t("navigation.createWarehouse");
   }, []);
 
   return (
@@ -49,7 +51,7 @@ export default function NewWarehouse() {
       <Breadcrumb />
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">New Warehouse</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("navigation.createWarehouse")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -57,7 +59,7 @@ export default function NewWarehouse() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Name
+                {t("common.name")}
               </label>
               <input
                 id="name"
@@ -78,7 +80,7 @@ export default function NewWarehouse() {
                 disabled={isSubmitting}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Save warehouse
+                {isSubmitting ? t("common.submitting") : t("warehouses.save")}
               </button>
               <button
                 role="button"
@@ -86,7 +88,7 @@ export default function NewWarehouse() {
                 onClick={() => navigate("/warehouses/list")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

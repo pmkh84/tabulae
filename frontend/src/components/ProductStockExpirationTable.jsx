@@ -1,3 +1,5 @@
+import { formatNumber, formatDate } from "../utils/format.js";
+import { t } from "../i18n/index.js";
 import { useNavigate } from "react-router-dom";
 
 export default function ProductStockExpirationTable({
@@ -11,26 +13,26 @@ export default function ProductStockExpirationTable({
   return (
     <div className="overflow-x-auto bg-white shadow rounded">
       <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-        <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <thead className="bg-gray-50 text-start text-xs font-semibold text-gray-500">
           <tr>
-            <th className="px-4 py-3">Warehouse</th>
-            <th className="px-4 py-3">Product</th>
-            <th className="px-4 py-3">SKU</th>
-            <th className="px-4 py-3">Lot</th>
-            <th className="px-4 py-3">Expiration Date</th>
-            <th className="px-4 py-3">Quantity</th>
-            {showActions && <th className="px-4 py-3">Actions</th>}
+            <th className="px-4 py-3">{t("common.warehouse")}</th>
+            <th className="px-4 py-3">{t("common.product")}</th>
+            <th className="px-4 py-3">{t("common.sku")}</th>
+            <th className="px-4 py-3">{t("common.lot")}</th>
+            <th className="px-4 py-3">{t("common.expiration")}</th>
+            <th className="px-4 py-3">{t("common.quantity")}</th>
+            {showActions && <th className="px-4 py-3">{t("common.actions")}</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {stock.map((line, index) => (
             <tr key={index} className="hover:bg-gray-50">
-              <td className="px-4 py-2">{line.warehouse_name}</td>
-              <td className="px-4 py-2">{line.product_name}</td>
-              <td className="px-4 py-2">{line.sku}</td>
-              <td className="px-4 py-2">{line.lot}</td>
-              <td className="px-4 py-2">{line.expiration_date ?? "No date"}</td>
-              <td className="px-4 py-2">{line.quantity}</td>
+              <td className="px-4 py-2"><bdi>{line.warehouse_name}</bdi></td>
+              <td className="px-4 py-2"><bdi>{line.product_name}</bdi></td>
+              <td className="px-4 py-2"><bdi dir="ltr">{line.sku}</bdi></td>
+              <td className="px-4 py-2"><bdi dir="ltr">{line.lot}</bdi></td>
+              <td className="px-4 py-2">{formatDate(line.expiration_date)}</td>
+              <td className="px-4 py-2">{formatNumber(line.quantity)}</td>
               {showActions && (
                 <td className="px-4 py-2 space-y-1">
                   <button
@@ -38,7 +40,7 @@ export default function ProductStockExpirationTable({
                     className="block text-indigo-600 hover:text-indigo-800 font-medium text-sm"
                     onClick={() => line && onViewHistory?.(line)}
                   >
-                    View history
+                    {t("common.viewHistory")}
                   </button>
                   <button
                     role="button"
@@ -60,7 +62,7 @@ export default function ProductStockExpirationTable({
                       })
                     }
                   >
-                    Create outgoing
+                    {t("stockMovements.createOutgoing")}
                   </button>
                 </td>
               )}
@@ -69,9 +71,9 @@ export default function ProductStockExpirationTable({
           {/* Total row */}
           <tr className="bg-gray-50 font-semibold">
             <td className="px-4 py-2" colSpan={5}>
-              Total quantity
+              {t("common.totalQuantity")}
             </td>
-            <td className="px-4 py-2">{totalQuantity}</td>
+            <td className="px-4 py-2">{formatNumber(totalQuantity)}</td>
             <td className="px-4 py-2"></td>
           </tr>
         </tbody>

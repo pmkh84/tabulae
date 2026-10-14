@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { t } from "../i18n/index.js";
 
 export default function HoverMessage({ text, icon = "ℹ️", className = "" }) {
   const [isVisible, setIsVisible] = useState(true);
@@ -7,7 +8,7 @@ export default function HoverMessage({ text, icon = "ℹ️", className = "" }) 
 
   return (
     <div
-      className={`absolute top-4 right-4 w-64 p-3 bg-indigo-50 border border-indigo-300 rounded text-sm text-indigo-900 shadow-md
+      className={`absolute top-4 end-4 w-64 p-3 bg-indigo-50 border border-indigo-300 rounded text-sm text-indigo-900 shadow-md
                   opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 ${className}`}
     >
       <div className="flex justify-between items-start">
@@ -15,11 +16,12 @@ export default function HoverMessage({ text, icon = "ℹ️", className = "" }) 
           {icon} {text}
         </span>
         <button
+          aria-label={t("common.close")}
           role="button"
           onClick={() => setIsVisible(false)}
-          className="ml-2 text-indigo-500 hover:text-indigo-700"
+          className="ms-2 text-indigo-500 hover:text-indigo-700"
         >
-          ✕
+          <span aria-hidden="true">✕</span>
         </button>
       </div>
     </div>

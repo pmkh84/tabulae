@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -35,7 +37,7 @@ export default function EditUser() {
         });
       } catch (error) {
         console.error("Error loading user:", error);
-        alert("Could not load user");
+        alert(errorMessage(error));
         navigate("/users");
       } finally {
         setIsLoading(false);
@@ -46,7 +48,7 @@ export default function EditUser() {
   }, [id, accessToken, navigate]);
 
   useEffect(() => {
-    document.title = "Edit User";
+    document.title = t("breadcrumbs.editUser");
   }, []);
 
   const handleChange = (e) => {
@@ -59,8 +61,8 @@ export default function EditUser() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.name.trim()) newErrors.name = t("validation.required");
+    if (!formData.email.trim()) newErrors.email = t("validation.required");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -71,25 +73,25 @@ export default function EditUser() {
 
     try {
       await updateUser(id, accessToken, formData);
-      alert("User updated successfully");
+      alert(t("users.updated"));
       navigate("/users");
     } catch (error) {
-      alert("Error updating user:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
   const handleDelete = async () => {
     const confirm = window.confirm(
-      "Are you sure you want to delete this user?"
+      t("users.confirmDelete")
     );
     if (!confirm) return;
 
     try {
       await deleteUser(id, accessToken);
-      alert("User deleted successfully");
+      alert(t("users.deleted"));
       navigate("/users");
     } catch (error) {
-      alert("Error deleting user:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
@@ -98,7 +100,7 @@ export default function EditUser() {
       <>
         <Navbar />
         <Breadcrumb />
-        <div className="p-6 text-gray-700">Loading user...</div>
+        <div className="p-6 text-gray-700">{t("users.loading")}</div>
       </>
     );
   }
@@ -109,7 +111,7 @@ export default function EditUser() {
       <Breadcrumb />
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">Edit User</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.editUser")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
@@ -118,7 +120,7 @@ export default function EditUser() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Name
+                {t("common.name")}
               </label>
               <input
                 id="name"
@@ -139,7 +141,7 @@ export default function EditUser() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email
+                {t("common.email")}
               </label>
               <input
                 id="email"
@@ -159,7 +161,7 @@ export default function EditUser() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                New Password
+                {t("common.newPassword")}
               </label>
               <input
                 id="password"
@@ -170,7 +172,7 @@ export default function EditUser() {
                 value={formData.password}
                 onChange={handleChange}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-3 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Leave blank to keep current"
+                placeholder={t("auth.keepPassword")}
               />
             </div>
 
@@ -180,7 +182,7 @@ export default function EditUser() {
                 htmlFor="role"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Role
+                {t("common.role")}
               </label>
               <select
                 id="role"
@@ -189,8 +191,8 @@ export default function EditUser() {
                 onChange={handleChange}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                <option value="user">{t("users.roles.user")}</option>
+                <option value="admin">{t("users.roles.admin")}</option>
               </select>
             </div>
 
@@ -204,7 +206,7 @@ export default function EditUser() {
                 onChange={handleChange}
               />
               <label htmlFor="is_active" className="text-sm text-gray-700">
-                Active
+                {t("common.active")}
               </label>
             </div>
 
@@ -213,14 +215,14 @@ export default function EditUser() {
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Save Changes
+                {t("common.saveChanges")}
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/users")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
@@ -229,7 +231,7 @@ export default function EditUser() {
             onClick={handleDelete}
             className="mt-4 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm"
           >
-            Delete User
+            {t("users.delete")}
           </button>
         </div>
       </div>

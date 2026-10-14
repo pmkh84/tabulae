@@ -1,3 +1,4 @@
+import { apiFetch } from "../i18n/errors.js";
 import API_URL from "./config";
 
 export async function getStockMovements({
@@ -17,7 +18,7 @@ export async function getStockMovements({
   queryParams.append("limit", limit);
   queryParams.append("offset", offset);
 
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock-movements?${queryParams.toString()}`,
     {
       headers: {
@@ -34,7 +35,7 @@ export async function getStockMovements({
 }
 
 export async function countStockMovesByMoveType({ accessToken }) {
-  const response = await fetch(`${API_URL}/stock-movements/summary/move-type`, {
+  const response = await apiFetch(`${API_URL}/stock-movements/summary/move-type`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -45,19 +46,17 @@ export async function countStockMovesByMoveType({ accessToken }) {
 }
 
 export async function getStockMovementById(id, accessToken) {
-  const response = await fetch(`${API_URL}/stock-movements/${id}`, {
+  const response = await apiFetch(`${API_URL}/stock-movements/${id}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
-  if (!response.ok) throw new Error("Failed to load movement.");
-
   return await response.json();
 }
 
 export async function getMovementLines(id, accessToken, limit = 10, offset = 0) {
-  const response = await fetch(
+  const response = await apiFetch(
     `${API_URL}/stock-movements/${id}/lines?limit=${limit}&offset=${offset}`,
     {
       headers: {
@@ -66,14 +65,11 @@ export async function getMovementLines(id, accessToken, limit = 10, offset = 0) 
     }
   );
 
-  if (!response.ok)
-    throw new Error("Failed to load movement lines.");
-
   return await response.json(); // { data: [...], total: n }
 }
 
 export async function createMovement(movement, accessToken) {
-  const response = await fetch(`${API_URL}/stock-movements`, {
+  const response = await apiFetch(`${API_URL}/stock-movements`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -82,16 +78,11 @@ export async function createMovement(movement, accessToken) {
     body: JSON.stringify(movement),
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to register movement.");
-  }
-
   return await response.json(); // MovementResponse object
 }
 
 export async function movementsLastYearByMonth(accessToken) {
-  const response = await fetch(`${API_URL}/stock-movements/last-year`, {
+  const response = await apiFetch(`${API_URL}/stock-movements/last-year`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

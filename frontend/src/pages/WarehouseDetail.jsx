@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -19,7 +21,7 @@ export default function WarehouseDetail() {
         setWarehouse(data);
       } catch (error) {
         console.error("Failed to load warehouse:", error);
-        alert("Failed to load warehouse");
+        alert(errorMessage(error));
         navigate("/warehouses/list");
       } finally {
         setIsLoading(false);
@@ -30,7 +32,7 @@ export default function WarehouseDetail() {
   }, [id, accessToken, navigate]);
 
   useEffect(() => {
-    document.title = "Warehouse Detail";
+    document.title = t("breadcrumbs.warehouseDetail");
   }, []);
 
   if (isLoading) {
@@ -38,7 +40,7 @@ export default function WarehouseDetail() {
       <>
         <Navbar />
         <Breadcrumb />
-        <div className="p-6 text-gray-700">Loading warehouse...</div>
+        <div className="p-6 text-gray-700">{t("warehouses.loading")}</div>
       </>
     );
   }
@@ -52,25 +54,25 @@ export default function WarehouseDetail() {
       <div className="p-6">
         <div className="max-w-3xl mx-auto space-y-4">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Warehouse Detail
+            {t("breadcrumbs.warehouseDetail")}
           </h1>
           <button
             role="button"
             onClick={() => navigate(`/warehouses/list`)}
             className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
-            ← Back to list
+            {"→ " + t("common.backToList")}
           </button>
 
           <div className="bg-white shadow rounded p-4 text-sm text-gray-700 space-y-2">
             <p>
-              <strong>ID:</strong> {warehouse.id}
+              <strong>{t("common.id") + ':'}</strong> <bdi dir="ltr">{warehouse.id}</bdi>
             </p>
             <p>
-              <strong>Name:</strong> {warehouse.name}
+              <strong>{t("common.name") + ':'}</strong> <bdi>{warehouse.name}</bdi>
             </p>
             <p>
-              <strong>Status:</strong> {warehouse.is_active ? "Active" : "Inactive"}
+              <strong>{t("common.status") + ':'}</strong> {warehouse.is_active ? t("common.active") : t("common.inactive")}
             </p>
           </div>
 
@@ -81,7 +83,7 @@ export default function WarehouseDetail() {
                 onClick={() => navigate(`/warehouses/${warehouse.id}/edit`)}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm"
               >
-                Edit warehouse
+                {t("breadcrumbs.editWarehouse")}
               </button>
             </div>
           )}

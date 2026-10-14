@@ -1,3 +1,6 @@
+import { errorMessage } from "../i18n/errors.js";
+import { isolateText } from "../i18n/display.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -11,6 +14,7 @@ import {
 } from "../api/stock";
 
 export default function ProductStock() {
+  const [loadError, setLoadError] = useState("");
   const { id } = useParams(); // product_id
   const { accessToken } = useAuth();
   const [stock, setStock] = useState([]);
@@ -21,16 +25,18 @@ export default function ProductStock() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Product Stock";
+    document.title = t("breadcrumbs.productStock");
   }, []);
 
   useEffect(() => {
     const fetchStock = async () => {
       try {
+        setLoadError("");
         const data = await getStockByProduct(id, accessToken, limit, offset);
         setStock(data.data);
         setTotal(data.total);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Error fetching product stock:", error.message);
       }
     };
@@ -41,9 +47,11 @@ export default function ProductStock() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
+        setLoadError("");
         const data = await getProductHistory(id, accessToken, 100);
         setSku(data.data[0]?.sku);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Error fetching product history:", error.message);
       }
     };
@@ -55,16 +63,17 @@ export default function ProductStock() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800">
-          Stock for product {sku}
+          {t("stock.productTitle", { sku: isolateText(sku, "ltr") })}
         </h1>
         <button
           role="button"
           onClick={() => window.history.back()}
           className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
         >
-          ← Go back
+          {"→ " + t("common.back")}
         </button>
 
         <StockSummaryTable

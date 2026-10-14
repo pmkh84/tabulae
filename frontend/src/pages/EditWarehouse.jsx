@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -28,7 +30,7 @@ export default function EditWarehouse() {
         });
       } catch (error) {
         console.error("Error loading warehouse:", error);
-        alert("Failed to load warehouse");
+        alert(errorMessage(error));
         navigate("/warehouses/list");
       } finally {
         setIsLoading(false);
@@ -39,7 +41,7 @@ export default function EditWarehouse() {
   }, [id, accessToken, navigate]);
 
   useEffect(() => {
-    document.title = "Edit Warehouse";
+    document.title = t("breadcrumbs.editWarehouse");
   }, []);
 
   const handleChange = (e) => {
@@ -53,7 +55,7 @@ export default function EditWarehouse() {
   const validate = () => {
     const newErrors = {};
     if (!form.name.trim()) {
-      newErrors.name = "Name is required";
+      newErrors.name = t("validation.required");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -65,11 +67,11 @@ export default function EditWarehouse() {
 
     try {
       await warehouseUpdate(id, form, accessToken);
-      alert("Warehouse updated successfully");
+      alert(t("warehouses.updated"));
       navigate(`/warehouses/${id}`);
     } catch (error) {
       console.error("Error updating warehouse:", error);
-      alert(error.message || "Failed to update warehouse");
+      alert(errorMessage(error) || t("errors.actionFailed"));
     }
   };
 
@@ -78,7 +80,7 @@ export default function EditWarehouse() {
       <>
         <Navbar />
         <Breadcrumb />
-        <div className="p-6 text-gray-700">Loading warehouse...</div>
+        <div className="p-6 text-gray-700">{t("warehouses.loading")}</div>
       </>
     );
   }
@@ -89,7 +91,7 @@ export default function EditWarehouse() {
       <Breadcrumb />
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">Edit warehouse</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.editWarehouse")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
@@ -98,7 +100,7 @@ export default function EditWarehouse() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Name
+                {t("common.name")}
               </label>
               <input
                 id="name"
@@ -124,7 +126,7 @@ export default function EditWarehouse() {
                   onChange={handleChange}
                 />
                 <label htmlFor="is_active" className="text-sm text-gray-700">
-                  Active
+                  {t("common.active")}
                 </label>
               </div>
             )}
@@ -134,14 +136,14 @@ export default function EditWarehouse() {
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Save changes
+                {t("common.saveChanges")}
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/warehouses/list")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

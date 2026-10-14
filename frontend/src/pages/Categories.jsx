@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
@@ -11,6 +13,7 @@ import {
 } from "../api/products";
 
 export default function CategoriesPage() {
+  const [loadError, setLoadError] = useState("");
   const { accessToken } = useAuth();
   const [categories, setCategories] = useState([]);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -21,9 +24,11 @@ export default function CategoriesPage() {
 
   const loadCategories = async () => {
     try {
+      setLoadError("");
       const data = await getCategories(accessToken);
       setCategories(data);
     } catch (e) {
+      setLoadError(errorMessage(e));
       console.error("Error loading categories:", e);
     }
   };
@@ -33,20 +38,20 @@ export default function CategoriesPage() {
   }, [accessToken]);
 
   useEffect(() => {
-    document.title = "Categories";
+    document.title = t("navigation.categories");
   }, []);
 
   const handleCreate = async () => {
     if (!newCategoryName.trim()) {
-      setError("Name is required");
+      setError(t("validation.required"));
       return;
     }
     if (newCategoryName.trim().length < 3) {
-      setError("Name must be at least 3 characters");
+      setError(t("validation.nameMin"));
       return;
     }
     if (newCategoryName.trim().length > 50) {
-      setError("Name must be at most 50 characters");
+      setError(t("validation.nameMax"));
       return;
     }
     try {
@@ -54,9 +59,9 @@ export default function CategoriesPage() {
       setCategories((prev) => [...prev, created]);
       setNewCategoryName("");
       setError("");
-      showMsg("Category created successfully");
+      showMsg(t("products.categoryCreated"));
     } catch (e) {
-      setError(e.message || "Failed to create category");
+      setError(errorMessage(e) || t("errors.actionFailed"));
     }
   };
 
@@ -68,23 +73,23 @@ export default function CategoriesPage() {
       setCategories((prev) => prev.map((c) => (c.id === id ? updated : c)));
       setEditingId(null);
       setEditedName("");
-      showMsg("Category updated");
+      showMsg(t("products.categoryUpdated"));
     } catch (e) {
-      alert(e.message || "Failed to update category");
+      alert(errorMessage(e) || t("errors.actionFailed"));
     }
   };
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this category?"
+      t("products.confirmCategoryDelete")
     );
     if (!confirmDelete) return;
     try {
       await deleteCategory(id, accessToken);
       setCategories((prev) => prev.filter((c) => c.id !== id));
-      showMsg("Category deleted");
+      showMsg(t("products.categoryDeleted"));
     } catch (e) {
-      alert(e.message || "Failed to delete category");
+      alert(errorMessage(e) || t("errors.actionFailed"));
     }
   };
 
@@ -97,14 +102,15 @@ export default function CategoriesPage() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6 max-w-3xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-800">Manage categories</h1>
+        <h1 className="text-2xl font-bold text-gray-800">{t("navigation.categories")}</h1>
         <button
           role="button"
           onClick={() => window.history.back()}
           className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
         >
-          ← Go back
+          {"→ " + t("common.back")}
         </button>
         {msg && (
           <div className="text-sm text-green-700 bg-green-100 border border-green-300 rounded px-4 py-2">
@@ -118,7 +124,7 @@ export default function CategoriesPage() {
             htmlFor={`input${newCategoryName}`}
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            New category
+            {t("products.newCategory")}
           </label>
           <div className="flex gap-2">
             <input
@@ -126,7 +132,7 @@ export default function CategoriesPage() {
               type="text"
               value={newCategoryName}
               onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Name"
+              placeholder={t("common.name")}
               minLength={3}
               maxLength={50}
               className="flex-1 bg-white border border-gray-300 rounded px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -136,7 +142,7 @@ export default function CategoriesPage() {
               onClick={handleCreate}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-sm"
             >
-              Create
+              {t("common.create")}
             </button>
           </div>
           <ErrorMessage message={error} />
@@ -144,6 +150,7 @@ export default function CategoriesPage() {
 
         {/* List */}
         <div className="bg-white shadow rounded divide-y divide-gray-200">
+          {categories.length === 0 && <p className="p-3 text-sm text-gray-500">{t("common.empty")}</p>}
           {categories.map((cat) => (
             <div key={cat.id} className="p-3 flex justify-between items-center">
               {editingId === cat.id ? (
@@ -155,13 +162,13 @@ export default function CategoriesPage() {
                     minLength={3}
                     maxLength={50}
                   />
-                  <div className="flex gap-2 ml-2">
+                  <div className="flex gap-2 ms-2">
                     <button
                       role="button"
                       onClick={() => handleEdit(cat.id)}
                       className="text-green-600 hover:underline text-sm"
                     >
-                      Save
+                      {t("common.save")}
                     </button>
                     <button
                       role="button"
@@ -171,13 +178,13 @@ export default function CategoriesPage() {
                       }}
                       className="text-gray-500 hover:underline text-sm"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </div>
                 </>
               ) : (
                 <>
-                  <span className="text-sm">{cat.name}</span>
+                  <span className="text-sm"><bdi>{cat.name}</bdi></span>
                   <div className="flex gap-2">
                     <button
                       role="button"
@@ -187,14 +194,14 @@ export default function CategoriesPage() {
                       }}
                       className="text-indigo-600 hover:underline text-sm"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button
                       role="button"
                       onClick={() => handleDelete(cat.id)}
                       className="text-red-600 hover:underline text-sm"
                     >
-                      Delete
+                      {t("common.delete")}
                     </button>
                   </div>
                 </>

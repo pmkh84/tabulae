@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -19,7 +21,7 @@ export default function ProductDetail() {
         setProduct(data);
       } catch (error) {
         console.error("Error loading product:", error);
-        alert("Failed to load product");
+        alert(errorMessage(error));
         navigate("/products/list");
       } finally {
         setIsLoading(false);
@@ -30,7 +32,7 @@ export default function ProductDetail() {
   }, [id, accessToken, navigate]);
 
   useEffect(() => {
-    document.title = "Product Details";
+    document.title = t("breadcrumbs.productDetail");
   }, []);
 
   if (isLoading) {
@@ -38,7 +40,7 @@ export default function ProductDetail() {
       <>
         <Navbar />
         <Breadcrumb />
-        <div className="p-6 text-gray-700">Loading product...</div>
+        <div className="p-6 text-gray-700">{t("products.loading")}</div>
       </>
     );
   }
@@ -52,31 +54,31 @@ export default function ProductDetail() {
       <div className="p-6">
         <div className="max-w-3xl mx-auto space-y-4">
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Product Details
+            {t("breadcrumbs.productDetail")}
           </h1>
           <button
             role="button"
             onClick={() => window.history.back()}
             className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
-            ← Go back
+            {"→ " + t("common.back")}
           </button>
 
           <div className="bg-white shadow rounded p-4 text-sm text-gray-700 space-y-2">
             <p>
-              <strong>SKU:</strong> {product.sku}
+              <strong>{t("common.sku") + ':'}</strong> <bdi dir="ltr">{product.sku}</bdi>
             </p>
             <p>
-              <strong>Name:</strong> {product.short_name}
+              <strong>{t("common.name") + ':'}</strong> <bdi>{product.short_name}</bdi>
             </p>
             <p>
-              <strong>Category:</strong> {product.category_name}
+              <strong>{t("common.category") + ':'}</strong> <bdi>{product.category_name}</bdi>
             </p>
             <p>
-              <strong>Description:</strong> {product.description || "—"}
+              <strong>{t("common.description") + ':'}</strong> {product.description || "—"}
             </p>
             <p>
-              <strong>Status:</strong> {product.is_active ? "Active" : "Inactive"}
+              <strong>{t("common.status") + ':'}</strong> {product.is_active ? t("common.active") : t("common.inactive")}
             </p>
           </div>
 
@@ -87,7 +89,7 @@ export default function ProductDetail() {
                 onClick={() => navigate(`/products/${product.id}/edit`)}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm"
               >
-                Edit product
+                {t("breadcrumbs.editProduct")}
               </button>
             )}
           </div>

@@ -1,3 +1,6 @@
+import { t } from "../i18n/index.js";
+import { formatNumber } from "../utils/format.js";
+
 export default function Pagination({ total, limit, offset, onPageChange }) {
   const currentPage = Math.floor(offset / limit) + 1;
   const totalPages = Math.ceil(total / limit);
@@ -11,32 +14,43 @@ export default function Pagination({ total, limit, offset, onPageChange }) {
   };
 
   return (
-    <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 gap-2">
+    <nav aria-label={t("pagination.label")} className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 gap-2">
       <div>
-        Page <span className="font-medium">{currentPage}</span> of{" "}
-        <span className="font-medium">{totalPages}</span> — Showing{" "}
-        <span className="font-medium">{offset + 1}</span> to{" "}
-        <span className="font-medium">{Math.min(offset + limit, total)}</span>{" "}
-        of <span className="font-medium">{total}</span> results
+        {total === 0 ? t("pagination.empty") : (
+          <>
+            {t("pagination.page", {
+              current: formatNumber(currentPage),
+              total: formatNumber(totalPages),
+            })}
+            {" — "}
+            {t("pagination.range", {
+              from: formatNumber(offset + 1),
+              to: formatNumber(Math.min(offset + limit, total)),
+              total: formatNumber(total),
+            })}
+          </>
+        )}
       </div>
       <div className="flex gap-2">
         <button
           role="button"
+          type="button"
           onClick={handlePrevious}
           disabled={offset === 0}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded disabled:opacity-50"
         >
-          Previous
+          {t("pagination.previous")}
         </button>
         <button
           role="button"
+          type="button"
           onClick={handleNext}
           disabled={offset + limit >= total}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded disabled:opacity-50"
         >
-          Next
+          {t("pagination.next")}
         </button>
       </div>
-    </div>
+    </nav>
   );
 }

@@ -1,16 +1,12 @@
+import { apiFetch } from "../i18n/errors.js";
 import API_URL from "./config";
 
 export async function getUserById(id, accessToken) {
-  const response = await fetch(`${API_URL}/users/${id}`, {
+  const response = await apiFetch(`${API_URL}/users/${id}`, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch user data.");
-  }
 
   return await response.json(); // { id, name, email, role, is_active }
 }
@@ -19,7 +15,7 @@ export async function updateUser(id, token, data) {
   const payload = { ...data };
   if (!data.password) delete payload.password;
 
-  const response = await fetch(`${API_URL}/users/${id}`, {
+  const response = await apiFetch(`${API_URL}/users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -28,25 +24,6 @@ export async function updateUser(id, token, data) {
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    let message = "Failed to update profile.";
-
-    try {
-      const error = await response.json();
-
-      if (Array.isArray(error.detail)) {
-        message = error.detail.map((e) => e.msg).join("\n");
-      }
-
-      else if (typeof error.detail === "string") {
-        message = error.detail;
-      }
-    } catch {
-      message = await response.text();
-    }
-
-    throw new Error(message);
-  }
   return await response.json();
 }
 
@@ -64,22 +41,17 @@ export async function getUsers({
   if (is_active === "true" || is_active === "false")
     url.searchParams.append("is_active", is_active);
 
-  const response = await fetch(url.toString(), {
+  const response = await apiFetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to fetch users.");
-  }
-
   return await response.json(); // { data, total, limit, offset }
 }
 
 export async function usersBulkStatus(ids, is_active, accessToken) {
-  const response = await fetch(`${API_URL}/users/bulk-status`, {
+  const response = await apiFetch(`${API_URL}/users/bulk-status`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -89,15 +61,12 @@ export async function usersBulkStatus(ids, is_active, accessToken) {
   });
 
   const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.detail || "Failed to update user status.");
-  }
 
   return data; // { message, skipped }
 }
 
 export async function deleteUser(id, accessToken) {
-  const response = await fetch(`${API_URL}/users/${id}`, {
+  const response = await apiFetch(`${API_URL}/users/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -105,15 +74,12 @@ export async function deleteUser(id, accessToken) {
   });
 
   const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.detail || "Failed to delete user.");
-  }
 
   return data;
 }
 
 export async function createUser(data, accessToken) {
-  const response = await fetch(`${API_URL}/users`, {
+  const response = await apiFetch(`${API_URL}/users`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -121,11 +87,6 @@ export async function createUser(data, accessToken) {
     },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to create user.");
-  }
 
   return await response.json();
 }

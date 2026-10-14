@@ -1,63 +1,63 @@
 import { Link, useLocation } from "react-router-dom";
-import { Breadcrumbs } from "@material-tailwind/react";
+import { t } from "../i18n/index.js";
 
 // Main mapping: route -> breadcrumb label
 const breadcrumbNameMap = {
-  "/dashboard": "Dashboard",
+  "/dashboard": "navigation.dashboard",
 
   // Products
-  "/products": "Products",
-  "/products/list": "Product List",
-  "/products/new": "New Product",
-  "/products/:id": "Product Detail",
-  "/products/:id/edit": "Edit Product",
-  "/products/:id/stock": "Product Stock",
-  "/products/:id/history": "Product History",
+  "/products": "navigation.products",
+  "/products/list": "breadcrumbs.productList",
+  "/products/new": "breadcrumbs.newProduct",
+  "/products/:id": "breadcrumbs.productDetail",
+  "/products/:id/edit": "breadcrumbs.editProduct",
+  "/products/:id/stock": "breadcrumbs.productStock",
+  "/products/:id/history": "breadcrumbs.productHistory",
 
   // Expiring stock
-  "/expiring": "Expiring Products",
+  "/expiration": "navigation.expiringProducts",
 
   // Categories
-  "/categories": "Manage Categories",
+  "/categories": "navigation.categories",
 
   // Warehouses
-  "/warehouses": "Warehouses",
-  "/warehouses/list": "Warehouse List",
-  "/warehouses/new": "New Warehouse",
-  "/warehouses/:id": "Warehouse Detail",
-  "/warehouses/:id/edit": "Edit Warehouse",
+  "/warehouses": "navigation.warehouses",
+  "/warehouses/list": "breadcrumbs.warehouseList",
+  "/warehouses/new": "breadcrumbs.newWarehouse",
+  "/warehouses/:id": "breadcrumbs.warehouseDetail",
+  "/warehouses/:id/edit": "breadcrumbs.editWarehouse",
 
   // Stock by warehouse
-  "/stock/warehouse/:warehouse_code": "Warehouse Stock",
-  "/stock/warehouse/:warehouse_code/product/:product_code": "Product Stock by Warehouse",
-  "/stock/warehouse/:warehouse_code/history": "Warehouse Stock History",
-  "/stock/warehouse/:warehouse_id/products/:product_id/history": "Product History by Warehouse",
+  "/stock/warehouse/:warehouse_code": "breadcrumbs.warehouseStock",
+  "/stock/warehouse/:warehouse_code/product/:product_code": "breadcrumbs.productStockByWarehouse",
+  "/stock/warehouse/:warehouse_code/history": "breadcrumbs.warehouseStockHistory",
+  "/stock/warehouse/:warehouse_id/products/:product_id/history": "breadcrumbs.productHistoryByWarehouse",
 
   // Movements
-  "/stock-movements": "Stock Movements",
-  "/stock-movements/list": "Movement List",
-  "/stock-movements/new": "New Movement",
-  "/stock-movements/:id": "Movement Detail",
+  "/stock-movements": "navigation.stockMovements",
+  "/stock-movements/list": "breadcrumbs.movementList",
+  "/stock-movements/new": "breadcrumbs.newMovement",
+  "/stock-movements/:id": "breadcrumbs.movementDetail",
 
   // Users
-  "/users": "Users",
-  "/users/new": "New User",
-  "/users/:id/edit": "Edit User",
+  "/users": "navigation.users",
+  "/users/new": "breadcrumbs.newUser",
+  "/users/:id/edit": "breadcrumbs.editUser",
 
   // Profile
-  "/profile": "User Profile",
+  "/profile": "breadcrumbs.profile",
 };
 
 // Manual overrides for paths with unclear hierarchy
 const breadcrumbOverrides = {
   "/stock/warehouse/:warehouse_code": [
-    { path: "/warehouses", label: "Warehouses" },
-    { path: "/warehouses/list", label: "Warehouse List" },
-    { path: null, label: "Warehouse Stock" },
+    { path: "/warehouses", label: "navigation.warehouses" },
+    { path: "/warehouses/list", label: "breadcrumbs.warehouseList" },
+    { path: null, label: "breadcrumbs.warehouseStock" },
   ],
   "/stock/warehouse/:warehouse_code/product/:product_code": [
-    { path: "/products", label: "Products" },
-    { path: null, label: "Product Stock by Warehouse" },
+    { path: "/products", label: "navigation.products" },
+    { path: null, label: "breadcrumbs.productStockByWarehouse" },
   ],
 };
 
@@ -114,28 +114,36 @@ export default function Breadcrumb() {
   }
 
   return (
-    <Breadcrumbs className="bg-white px-4 py-2">
-      <Link to="/dashboard" className="opacity-60 flex items-center gap-1 mr-1">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-4 w-4"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        Home
-      </Link>
-
-      {items.map(({ path, label, isLast }) =>
-        isLast || !path ? (
-          <span key={label}>{label}</span>
-        ) : (
-          <Link key={path} to={path} className="opacity-60">
-            {label}
+    <nav aria-label={t("breadcrumbs.label")} className="bg-white px-4 py-2">
+      <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-800">
+        <li>
+          <Link to="/dashboard" className="opacity-60 flex items-center gap-1 me-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+            </svg>
+            {t("common.home")}
           </Link>
-        )
-      )}
-    </Breadcrumbs>
+        </li>
+
+        {items.map(({ path, label, isLast }) => (
+          <li key={path || label} className="flex items-center gap-2">
+            <span aria-hidden="true">/</span>
+            {isLast || !path ? (
+              <span aria-current="page">{t(label)}</span>
+            ) : (
+              <Link to={path} className="opacity-60">
+                {t(label)}
+              </Link>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

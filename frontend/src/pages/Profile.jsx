@@ -1,3 +1,6 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
+import { roleLabel } from "../i18n/display.js";
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/useAuth";
@@ -23,7 +26,7 @@ export default function Profile() {
   }, [user]);
 
   useEffect(() => {
-    document.title = "Profile";
+    document.title = t("auth.profile");
   }, []);
 
   const handleUpdate = async (e) => {
@@ -32,18 +35,18 @@ export default function Profile() {
     setSuccessMsg("");
     try {
       await verifyPassword(password, accessToken);
-    } catch {
-      setErrorMsg("Incorrect password. No changes were made.");
+    } catch (error) {
+      setErrorMsg(errorMessage(error));
       return;
     }
 
     try {
       await updateUser(user.id, accessToken, { name, email });
       setEditMode(false);
-      setSuccessMsg("Profile updated successfully.");
+      setSuccessMsg(t("auth.profileUpdated"));
       setUser((prev) => ({ ...prev, name, email }));
     } catch (err) {
-      setErrorMsg(err.message);
+      setErrorMsg(errorMessage(err));
     }
   };
 
@@ -52,12 +55,8 @@ export default function Profile() {
       <Navbar />
       <div className="flex justify-center pt-12 h-screen">
         <div className="space-y-12 w-full max-w-2xl px-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">
-            Your profile
-          </h2>
-          <p className="text-sm text-gray-600">
-            Here you can view and update your account details.
-          </p>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">{t("auth.profile")}</h2>
+          <p className="text-sm text-gray-600">{t("auth.profileHelp")}</p>
 
           <form onSubmit={handleUpdate} className="space-y-3">
             {/* Name */}
@@ -66,11 +65,9 @@ export default function Profile() {
                 <label
                   htmlFor="name"
                   className="block text-sm/6 font-medium text-gray-900"
-                >
-                  Name
-                </label>
+                >{t("common.name")}</label>
                 <div className="mt-2">
-                  <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                  <div className="flex items-center rounded-md ps-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
                     <input
                       id="name"
                       name="name"
@@ -80,7 +77,7 @@ export default function Profile() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       readOnly={!editMode}
-                      className={`block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 ${
+                      className={`block min-w-0 grow py-1.5 pe-3 ps-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 ${
                         editMode ? "bg-white" : "bg-gray-100"
                       }`}
                     />
@@ -95,11 +92,9 @@ export default function Profile() {
                 <label
                   htmlFor="email"
                   className="block text-sm/6 font-medium text-gray-900"
-                >
-                  Email
-                </label>
+                >{t("common.email")}</label>
                 <div className="mt-2">
-                  <div className="flex items-center rounded-md pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                  <div className="flex items-center rounded-md ps-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
                     <input
                       id="email"
                       name="email"
@@ -108,7 +103,7 @@ export default function Profile() {
                       maxLength={100}
                       onChange={(e) => setEmail(e.target.value)}
                       readOnly={!editMode}
-                      className={`block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 ${
+                      className={`block min-w-0 grow py-1.5 pe-3 ps-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 ${
                         editMode ? "bg-white" : "bg-gray-100"
                       }`}
                     />
@@ -124,11 +119,9 @@ export default function Profile() {
                   <label
                     htmlFor="password"
                     className="block text-sm/6 font-medium text-gray-900"
-                  >
-                    Password (required to confirm changes)
-                  </label>
+                  >{t("auth.confirmChangesPassword")}</label>
                   <div className="mt-2">
-                    <div className="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
+                    <div className="flex items-center rounded-md bg-white ps-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600">
                       <input
                         id="password"
                         name="password"
@@ -137,7 +130,7 @@ export default function Profile() {
                         maxLength={255}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="block min-w-0 grow py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
+                        className="block min-w-0 grow py-1.5 pe-3 ps-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6"
                         required
                       />
                     </div>
@@ -149,18 +142,16 @@ export default function Profile() {
             {/* Role */}
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="sm:col-span-4">
-                <label className="block text-sm/6 font-medium text-gray-900">
-                  Role
-                </label>
+                <label className="block text-sm/6 font-medium text-gray-900">{t("common.role")}</label>
                 <div className="mt-2">
-                  <p>{role}</p>
+                  <p>{roleLabel(role)}</p>
                 </div>
               </div>
             </div>
           </form>
 
           {/* Messages */}
-          {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+          {errorMsg && <p className="text-red-500 text-sm whitespace-pre-line" role="alert">{errorMsg}</p>}
           {successMsg && <p className="text-green-600 text-sm">{successMsg}</p>}
 
           {/* Buttons */}
@@ -172,9 +163,7 @@ export default function Profile() {
                   type="submit"
                   onClick={handleUpdate}
                   className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-                >
-                  Save changes
-                </button>
+                >{t("common.saveChanges")}</button>
                 <button
                   role="button"
                   type="button"
@@ -187,9 +176,7 @@ export default function Profile() {
                     setEmail(user.email || "");
                   }}
                   className="inline-flex items-center rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
+                >{t("common.cancel")}</button>
               </>
             ) : (
               <button
@@ -197,9 +184,7 @@ export default function Profile() {
                 type="button"
                 onClick={() => setEditMode(true)}
                 className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-              >
-                Edit
-              </button>
+              >{t("common.edit")}</button>
             )}
           </div>
         </div>

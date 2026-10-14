@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -13,6 +15,7 @@ import {
 import CreateInlineCategory from "../components/CreateInlineCategory";
 
 export default function EditProduct() {
+  const [loadError, setLoadError] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
@@ -31,9 +34,11 @@ export default function EditProduct() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoadError("");
         const list = await getCategories(accessToken);
         setCategories(list);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Error loading categories:", error);
       }
     };
@@ -53,7 +58,7 @@ export default function EditProduct() {
         });
       } catch (error) {
         console.error("Error loading product:", error);
-        alert("Could not load the product.");
+        alert(errorMessage(error));
         navigate("/products/list");
       } finally {
         setIsLoading(false);
@@ -64,7 +69,7 @@ export default function EditProduct() {
   }, [id, accessToken, navigate]);
 
   useEffect(() => {
-    document.title = "Edit Product";
+    document.title = t("breadcrumbs.editProduct");
   }, []);
 
   const handleChange = (e) => {
@@ -77,9 +82,9 @@ export default function EditProduct() {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.sku.trim()) newErrors.sku = "SKU is required";
-    if (!form.short_name.trim()) newErrors.short_name = "Name is required";
-    if (!form.category_id) newErrors.category_id = "Category is required";
+    if (!form.sku.trim()) newErrors.sku = t("validation.required");
+    if (!form.short_name.trim()) newErrors.short_name = t("validation.required");
+    if (!form.category_id) newErrors.category_id = t("validation.required");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -90,27 +95,27 @@ export default function EditProduct() {
 
     try {
       await updateProduct(id, form, accessToken);
-      alert("Product updated successfully");
+      alert(t("products.updated"));
       navigate(`/products/${id}`);
     } catch (error) {
       console.error("Error updating product:", error);
-      alert("Failed to update the product:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
   const handleDelete = async () => {
     const confirm = window.confirm(
-      "Are you sure you want to delete this product?"
+      t("products.confirmDelete")
     );
     if (!confirm) return;
 
     try {
       await deleteProduct(id, accessToken);
-      alert("Product deleted successfully");
+      alert(t("products.deleted"));
       navigate("/products/list");
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Failed to delete the product:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
@@ -119,7 +124,7 @@ export default function EditProduct() {
       <>
         <Navbar />
         <Breadcrumb />
-        <div className="p-6 text-gray-700">Loading product...</div>
+        <div className="p-6 text-gray-700">{t("products.loading")}</div>
       </>
     );
   }
@@ -128,9 +133,10 @@ export default function EditProduct() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">Edit Product</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.editProduct")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* SKU */}
@@ -139,7 +145,7 @@ export default function EditProduct() {
                 htmlFor="sku"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                SKU
+                {t("common.sku")}
               </label>
               <input
                 id="sku"
@@ -150,7 +156,7 @@ export default function EditProduct() {
                 minLength={3}
                 maxLength={20}
                 pattern="[A-Z0-9]+"
-                title="Only uppercase letters and numbers allowed"
+                title={t("validation.sku")}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <ErrorMessage message={errors.sku} />
@@ -162,7 +168,7 @@ export default function EditProduct() {
                 htmlFor="short_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Short Name
+                {t("common.shortName")}
               </label>
               <input
                 id="short_name"
@@ -183,7 +189,7 @@ export default function EditProduct() {
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Description
+                {t("common.description")}
               </label>
               <textarea
                 id="description"
@@ -202,7 +208,7 @@ export default function EditProduct() {
                 htmlFor="category_id"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Category
+                {t("common.category")}
               </label>
               <select
                 id="category_id"
@@ -212,7 +218,7 @@ export default function EditProduct() {
                 required
                 className="w-full bg-white h-[36px] rounded border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
-                <option value="">Select a category</option>
+                <option value="">{t("products.selectCategory")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -240,7 +246,7 @@ export default function EditProduct() {
                   onChange={handleChange}
                 />
                 <label htmlFor="is_active" className="text-sm text-gray-700">
-                  Active
+                  {t("common.active")}
                 </label>
               </div>
             )}
@@ -250,14 +256,14 @@ export default function EditProduct() {
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Save changes
+                {t("common.saveChanges")}
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/products/list")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>
@@ -267,7 +273,7 @@ export default function EditProduct() {
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded text-sm"
             >
-              Delete product
+              {t("products.delete")}
             </button>
           )}
         </div>

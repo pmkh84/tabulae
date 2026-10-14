@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/useAuth";
 import { Navigate } from "react-router-dom";
@@ -14,15 +16,15 @@ export default function Login() {
     try {
       await login(email, password);
     } catch (error) {
-      setErrorMsg(error.message);
+      setErrorMsg(errorMessage(error));
     }
   };
 
   useEffect(() => {
-    document.title = "Login";
+    document.title = t("auth.login");
   }, []);
 
-  if (isLoading) return null;
+  if (isLoading) return <p role="status" className="p-6">{t("common.loading")}</p>;
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -32,9 +34,7 @@ export default function Login() {
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-            Sign in to your account
-          </h2>
+          <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">{t("auth.login")}</h2>
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -43,9 +43,7 @@ export default function Login() {
               <label
                 htmlFor="email"
                 className="block text-sm/6 font-medium text-gray-900"
-              >
-                Email address
-              </label>
+              >{t("common.email")}</label>
               <div className="mt-2">
                 <input
                   id="email"
@@ -63,9 +61,7 @@ export default function Login() {
               <label
                 htmlFor="password"
                 className="block text-sm/6 font-medium text-gray-900"
-              >
-                Password
-              </label>
+              >{t("common.password")}</label>
               <div className="mt-2">
                 <input
                   id="password"
@@ -80,24 +76,19 @@ export default function Login() {
               </div>
             </div>
 
-            {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+            {errorMsg && <p className="text-red-500 text-sm whitespace-pre-line" role="alert">{errorMsg}</p>}
 
             <div>
               <button
                 role="button"
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-white font-semibold hover:bg-indigo-500"
-              >
-                Sign in
-              </button>
-              <p className="mt-4 text-center text-sm text-gray-600">
-                Don't have an account?{" "}
+              >{t("auth.signIn")}</button>
+              <p className="mt-4 text-center text-sm text-gray-600">{t("auth.noAccount")}{" "}
                 <a
                   href="/register"
                   className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  Register here
-                </a>
+                >{t("auth.register")}</a>
               </p>
             </div>
           </form>

@@ -3,6 +3,10 @@ This file provides reusable functions to export filtered data from various endpo
 import Papa from "papaparse";
 */
 import Papa from "papaparse";
+import { t } from "../i18n/index.js";
+import { apiFetch, errorMessage } from "../i18n/errors.js";
+import { roleLabel, movementTypeLabel } from "../i18n/display.js";
+import { formatDate } from "./format.js";
 
 // Generic function to export data from any endpoint as a CSV
 export async function exportCSVGeneric({
@@ -27,7 +31,7 @@ export async function exportCSVGeneric({
     }
 
     // Fetch data with authentication header
-    const response = await fetch(url.toString(), {
+    const response = await apiFetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
@@ -38,7 +42,7 @@ export async function exportCSVGeneric({
 
     // Convert data to CSV using PapaParse
     const csv = Papa.unparse(items.map(mapFn), { delimiter: ";" });
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
     const urlBlob = URL.createObjectURL(blob);
 
     // Trigger file download in browser
@@ -50,7 +54,7 @@ export async function exportCSVGeneric({
     document.body.removeChild(link);
   } catch (error) {
     console.error("Error exporting CSV:", error);
-    alert("An error occurred while exporting:\n" + error.message);
+    alert(t("exports.failed", { message: errorMessage(error) }));
   }
 }
 
@@ -83,11 +87,11 @@ export async function exportFilteredMovementsCSV({
     queryParams,
     filename: "stock-movements.csv",
     mapFn: (m) => ({
-      ID: m.id,
-      Type: m.move_type,
-      User: m.user_name,
-      Date: new Date(m.created_at).toLocaleDateString(),
-      Lines: m.lines?.length ?? 0,
+      [t("common.id")]: m.id,
+      [t("common.type")]: movementTypeLabel(m.move_type),
+      [t("common.user")]: m.user_name,
+      [t("common.date")]: formatDate(m.created_at),
+      [t("common.lines")]: m.lines?.length ?? 0,
     }),
   });
 }
@@ -117,10 +121,10 @@ export async function exportFilteredProductsCSV({
     queryParams,
     filename: "products.csv",
     mapFn: (p) => ({
-      SKU: p.sku,
-      Name: p.short_name,
-      Category: p.category_name,
-      Status: p.is_active ? "Active" : "Inactive",
+      [t("common.sku")]: p.sku,
+      [t("common.name")]: p.short_name,
+      [t("common.category")]: p.category_name,
+      [t("common.status")]: p.is_active ? t("common.active") : t("common.inactive"),
     }),
   });
 }
@@ -150,9 +154,9 @@ export async function exportFilteredWarehousesCSV({
     queryParams,
     filename: "warehouses.csv",
     mapFn: (a) => ({
-      ID: a.id,
-      Name: a.name,
-      Status: a.is_active ? "Active" : "Inactive",
+      [t("common.id")]: a.id,
+      [t("common.name")]: a.name,
+      [t("common.status")]: a.is_active ? t("common.active") : t("common.inactive"),
     }),
   });
 }
@@ -183,11 +187,11 @@ export async function exportFilteredUsersCSV({
     queryParams,
     filename: "users.csv",
     mapFn: (u) => ({
-      ID: u.id,
-      Name: u.name,
-      Email: u.email,
-      Role: u.role,
-      Status: u.is_active ? "Active" : "Inactive",
+      [t("common.id")]: u.id,
+      [t("common.name")]: u.name,
+      [t("common.email")]: u.email,
+      [t("common.role")]: roleLabel(u.role),
+      [t("common.status")]: u.is_active ? t("common.active") : t("common.inactive"),
     }),
   });
 }

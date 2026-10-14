@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
@@ -30,9 +32,9 @@ export default function NewUser() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!formData.password.trim()) newErrors.password = "Password is required";
+    if (!formData.name.trim()) newErrors.name = t("validation.required");
+    if (!formData.email.trim()) newErrors.email = t("validation.required");
+    if (!formData.password.trim()) newErrors.password = t("validation.required");
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -43,16 +45,16 @@ export default function NewUser() {
 
     try {
       await createUser(formData, accessToken);
-      alert("User created successfully");
+      alert(t("users.created"));
       navigate("/users");
     } catch (error) {
       console.error(error);
-      alert("Failed to create user:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
   useEffect(() => {
-    document.title = "New User";
+    document.title = t("navigation.createUser");
   }, []);
 
   return (
@@ -61,7 +63,7 @@ export default function NewUser() {
       <Breadcrumb />
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">New User</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("navigation.createUser")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
@@ -70,7 +72,7 @@ export default function NewUser() {
                 htmlFor="name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Name
+                {t("common.name")}
               </label>
               <input
                 id="name"
@@ -91,7 +93,7 @@ export default function NewUser() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email
+                {t("common.email")}
               </label>
               <input
                 id="email"
@@ -111,7 +113,7 @@ export default function NewUser() {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Password
+                {t("common.password")}
               </label>
               <input
                 id="password"
@@ -132,7 +134,7 @@ export default function NewUser() {
                 htmlFor="role"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Role
+                {t("common.role")}
               </label>
               <select
                 id="role"
@@ -141,8 +143,8 @@ export default function NewUser() {
                 onChange={handleChange}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
+                <option value="user">{t("users.roles.user")}</option>
+                <option value="admin">{t("users.roles.admin")}</option>
               </select>
             </div>
 
@@ -156,7 +158,7 @@ export default function NewUser() {
                 onChange={handleChange}
               />
               <label htmlFor="is_active" className="text-sm text-gray-700">
-                Active
+                {t("common.active")}
               </label>
             </div>
 
@@ -167,7 +169,7 @@ export default function NewUser() {
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Create User
+                {t("navigation.createUser")}
               </button>
               <button
                 role="button"
@@ -175,7 +177,7 @@ export default function NewUser() {
                 onClick={() => navigate("/users")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

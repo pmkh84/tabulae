@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import { register as registerAPI } from "../api/auth";
 import { Navigate } from "react-router-dom";
@@ -18,29 +20,17 @@ export default function Register() {
 
     try {
       await registerAPI({ name, email, password });
-      setSuccessMsg("Registration successful. Wait for admin activation.");
+      setSuccessMsg(t("auth.registered"));
     } catch (error) {
-      try {
-        const parsed = JSON.parse(error.message);
-        if (Array.isArray(parsed.detail)) {
-          const message = parsed.detail.map((err) => err.msg).join(". ");
-          setErrorMsg(message);
-        } else if (typeof parsed.detail === "string") {
-          setErrorMsg(parsed.detail);
-        } else {
-          setErrorMsg("Failed to register user.");
-        }
-      } catch {
-        setErrorMsg("Unexpected error during registration.");
-      }
+      setErrorMsg(errorMessage(error));
     }
   };
 
   useEffect(() => {
-    document.title = "Register";
+    document.title = t("auth.register");
   }, []);
 
-  if (isLoading) return null;
+  if (isLoading) return <p role="status" className="p-6">{t("common.loading")}</p>;
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -49,9 +39,7 @@ export default function Register() {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Create an account
-        </h2>
+        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">{t("auth.createAccount")}</h2>
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
@@ -60,9 +48,7 @@ export default function Register() {
             <label
               htmlFor="name"
               className="block text-sm/6 font-medium text-gray-900"
-            >
-              Name
-            </label>
+            >{t("common.name")}</label>
             <input
               id="name"
               type="text"
@@ -79,9 +65,7 @@ export default function Register() {
             <label
               htmlFor="email"
               className="block text-sm/6 font-medium text-gray-900"
-            >
-              Email
-            </label>
+            >{t("common.email")}</label>
             <input
               id="email"
               type="email"
@@ -97,9 +81,7 @@ export default function Register() {
             <label
               htmlFor="password"
               className="block text-sm/6 font-medium text-gray-900"
-            >
-              Password
-            </label>
+            >{t("common.password")}</label>
             <input
               id="password"
               type="password"
@@ -112,7 +94,7 @@ export default function Register() {
             />
           </div>
 
-          {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
+          {errorMsg && <p className="text-red-500 text-sm whitespace-pre-line" role="alert">{errorMsg}</p>}
           {successMsg && <p className="text-green-600 text-sm">{successMsg}</p>}
 
           <div>
@@ -120,17 +102,12 @@ export default function Register() {
               role="button"
               type="submit"
               className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-white font-semibold hover:bg-indigo-500"
-            >
-              Sign up
-            </button>
-            <p className="mt-4 text-center text-sm text-gray-600">
-              Already have an account?{" "}
+            >{t("auth.register")}</button>
+            <p className="mt-4 text-center text-sm text-gray-600">{t("auth.hasAccount")}{" "}
               <a
                 href="/login"
                 className="font-medium text-indigo-600 hover:text-indigo-500"
-              >
-                Log in
-              </a>
+              >{t("auth.signIn")}</a>
             </p>
           </div>
         </form>

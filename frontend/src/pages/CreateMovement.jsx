@@ -1,16 +1,21 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import { useAuth } from "../context/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import ErrorMessage from "../components/ErrorMessage";
-import AsyncSelect from "react-select/async";
+import AsyncSelect from "../components/LocalizedAsyncSelect";
+import { formatDate, formatNumber } from "../utils/format.js";
+import { isolateText } from "../i18n/display.js";
 import { createMovement } from "../api/stock_moves";
 import { searchProducts } from "../api/products";
 import { searchWarehouses } from "../api/warehouses";
 import { getAvailableLots } from "../api/stock";
 
 export default function CreateMovement() {
+  const [loadError, setLoadError] = useState("");
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,7 +40,7 @@ export default function CreateMovement() {
   ]);
 
   useEffect(() => {
-    document.title = "New Movement";
+    document.title = t("navigation.createMovement");
   }, []);
 
   const loadProductOptions = async (inputValue, callback) => {
@@ -45,14 +50,16 @@ export default function CreateMovement() {
     }
 
     try {
+      setLoadError("");
       const products = await searchProducts(inputValue, accessToken, 20, 0);
       const options = products.map((p) => ({
         value: p.id,
-        label: p.short_name + (p.is_active ? "" : " (inactive)"),
+        label: p.short_name + (p.is_active ? "" : ` (${t("common.inactive")})`),
         isDisabled: !p.is_active,
       }));
       callback(options);
     } catch (error) {
+      setLoadError(errorMessage(error));
       console.error("Error loading products:", error);
       callback([]);
     }
@@ -65,14 +72,16 @@ export default function CreateMovement() {
     }
 
     try {
+      setLoadError("");
       const warehouses = await searchWarehouses(inputValue, accessToken, 20, 0);
       const options = warehouses.map((w) => ({
         value: w.id,
-        label: w.name + (w.is_active ? "" : " (inactive)"),
+        label: w.name + (w.is_active ? "" : ` (${t("common.inactive")})`),
         isDisabled: !w.is_active,
       }));
       callback(options);
     } catch (error) {
+      setLoadError(errorMessage(error));
       console.error("Error loading warehouses:", error);
       callback([]);
     }
@@ -101,6 +110,7 @@ export default function CreateMovement() {
       (field === "product_id" || field === "warehouse_id")
     ) {
       try {
+        setLoadError("");
         const lots = await getAvailableLots({
           productId: line.product_id,
           warehouseId: line.warehouse_id,
@@ -111,6 +121,7 @@ export default function CreateMovement() {
           [index]: lots,
         }));
       } catch (err) {
+        setLoadError(errorMessage(err));
         console.error("Error loading lots:", err.message);
         setAvailableLots((prev) => ({ ...prev, [index]: [] }));
       }
@@ -140,16 +151,16 @@ export default function CreateMovement() {
 
     lines.forEach((l, index) => {
       if (l.lot && l.lot.length > 50) {
-        newErrors[`lot_${index}`] = "Lot cannot exceed 50 characters";
+        newErrors[`lot_${index}`] = t("validation.lotMax");
       }
       if (!l.warehouse_id) {
-        newErrors[`warehouse_id_${index}`] = "Required field";
+        newErrors[`warehouse_id_${index}`] = t("validation.required");
       }
       if (!l.product_id) {
-        newErrors[`product_id_${index}`] = "Required field";
+        newErrors[`product_id_${index}`] = t("validation.required");
       }
       if (!l.quantity || isNaN(l.quantity) || l.quantity < 1) {
-        newErrors[`quantity_${index}`] = "Invalid quantity";
+        newErrors[`quantity_${index}`] = t("validation.quantity");
       }
     });
 
@@ -175,26 +186,27 @@ export default function CreateMovement() {
 
     try {
       await createMovement(movement, accessToken);
-      alert("Movement successfully registered");
+      alert(t("stockMovements.created"));
       navigate("/stock-movements/list");
     } catch (err) {
       console.error(err);
-      alert("Error registering movement:\n" + err.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(err));
     }
   };
 
   const typeOptions = [
-    { value: "incoming", label: "Incoming" },
-    { value: "outgoing", label: "Outgoing" },
+    { value: "incoming", label: t("notifications.incoming") },
+    { value: "outgoing", label: t("notifications.outgoing") },
   ];
 
   return (
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          New Stock Movement
+          {t("navigation.createMovement")}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -203,10 +215,10 @@ export default function CreateMovement() {
               htmlFor="move_type"
               className="block font-medium text-gray-700 mb-1"
             >
-              Movement Type
+              {t("stockMovements.type")}
             </label>
             <AsyncSelect
-              id="move_type"
+              inputId="move_type"
               defaultOptions={typeOptions}
               loadOptions={(inputValue, callback) => {
                 callback(typeOptions); // Always return same options
@@ -223,27 +235,26 @@ export default function CreateMovement() {
 
           <div>
             <h2 className="block font-medium text-gray-700 mb-1">
-              Movement Lines
+              {t("stockMovements.lines")}
             </h2>
 
             <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
-              <span>ℹ️</span>
+              <span aria-hidden="true">ℹ️</span>
               <span>
-                The <strong>product</strong> and <strong>warehouse</strong>{" "}
-                fields are auto-loaded when you type at least 4 characters.
+                {t("stockMovements.selectionHelp")}
               </span>
             </div>
 
             <div className="overflow-x-auto bg-white shadow rounded">
               <table className="min-w-[900px] w-full divide-y divide-gray-200 text-sm text-gray-800">
-                <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <thead className="bg-gray-50 text-start text-xs font-semibold text-gray-500">
                   <tr>
-                    <th className="px-4 py-2 min-w-[250px]">Warehouse</th>
-                    <th className="px-4 py-2 min-w-[250px]">Product</th>
-                    <th className="px-4 py-2 min-w-[250px]">Lot</th>
-                    <th className="px-4 py-2 min-w-[250px]">Expiration Date</th>
-                    <th className="px-4 py-2">Quantity</th>
-                    <th className="px-4 py-2 text-center">Actions</th>
+                    <th className="px-4 py-2 min-w-[250px]">{t("common.warehouse")}</th>
+                    <th className="px-4 py-2 min-w-[250px]">{t("common.product")}</th>
+                    <th className="px-4 py-2 min-w-[250px]">{t("common.lot")}</th>
+                    <th className="px-4 py-2 min-w-[250px]">{t("common.expiration")}</th>
+                    <th className="px-4 py-2">{t("common.quantity")}</th>
+                    <th className="px-4 py-2 text-center">{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -252,6 +263,7 @@ export default function CreateMovement() {
                       {/* Warehouse */}
                       <td className="px-4 py-2">
                         <AsyncSelect
+                          aria-label={t("common.warehouse")}
                           cacheOptions
                           defaultOptions
                           loadOptions={loadWarehouseOptions}
@@ -269,11 +281,11 @@ export default function CreateMovement() {
                                 value: line.warehouse_id,
                                 label:
                                   line.warehouse_label ||
-                                  "Selected warehouse",
+                                  t("stockMovements.selectedWarehouse"),
                               }
                               : null
                           }
-                          placeholder="Select a warehouse..."
+                          placeholder={t("stockMovements.selectWarehouse")}
                           isClearable
                           menuPortalTarget={document.body}
                           menuPosition="fixed"
@@ -282,7 +294,7 @@ export default function CreateMovement() {
                         />
                         <div className="min-h-[1.25rem]">
                           <ErrorMessage
-                            message={errors[`warehouse_${index}`]}
+                            message={errors[`warehouse_id_${index}`]}
                           />
                         </div>
                       </td>
@@ -290,6 +302,7 @@ export default function CreateMovement() {
                       {/* Product */}
                       <td className="px-4 py-2">
                         <AsyncSelect
+                          aria-label={t("common.product")}
                           cacheOptions
                           defaultOptions
                           loadOptions={loadProductOptions}
@@ -309,7 +322,7 @@ export default function CreateMovement() {
                               }
                               : null
                           }
-                          placeholder="Select a product..."
+                          placeholder={t("stockMovements.selectProduct")}
                           isClearable
                           className="text-sm w-full"
                           classNamePrefix="react-select"
@@ -317,7 +330,7 @@ export default function CreateMovement() {
                           menuPosition="fixed"
                         />
                         <div className="min-h-[1.25rem]">
-                          <ErrorMessage message={errors[`product_${index}`]} />
+                          <ErrorMessage message={errors[`product_id_${index}`]} />
                         </div>
                       </td>
 
@@ -347,21 +360,24 @@ export default function CreateMovement() {
                             }}
                             className="h-[36px] border border-gray-300 rounded px-2 py-1 w-full text-sm"
                           >
-                            <option value="">Select a lot</option>
+                            <option value="">{t("stockMovements.selectLot")}</option>
                             {availableLots[index].map((lot) => (
                               <option key={lot.lot} value={lot.lot}>
-                                {lot.lot} ({lot.quantity} units){" "}
-                                {lot.expiration_date
-                                  ? `- exp: ${new Date(
-                                    lot.expiration_date
-                                  ).toLocaleDateString()}`
-                                  : ""}
+                                {t("stockMovements.lotOption", {
+                                  lot: isolateText(lot.lot, "ltr"),
+                                  quantity: formatNumber(lot.quantity),
+                                  expiration: lot.expiration_date
+                                    ? t("stockMovements.lotExpiration", { date: formatDate(lot.expiration_date) })
+                                    : "",
+                                })}
                               </option>
                             ))}
                           </select>
                         ) : (
                           <input
                             type="text"
+                            aria-label={t("common.lot")}
+                            dir="ltr"
                             value={line.lot}
                             onChange={(e) =>
                               handleChangeLine(index, "lot", e.target.value)
@@ -370,7 +386,7 @@ export default function CreateMovement() {
                             className="h-[36px] border border-gray-300 rounded px-2 py-1 w-full"
                           />
                         )}
-                        <div className="min-h-[1.25rem]"></div>
+                        <div className="min-h-[1.25rem]"><ErrorMessage message={errors[`lot_${index}`]} /></div>
                       </td>
 
                       {/* Expiration Date */}
@@ -385,6 +401,7 @@ export default function CreateMovement() {
                           return (
                             <input
                               type="date"
+                              aria-label={t("common.expiration")}
                               value={line.expiration_date}
                               readOnly={lotInList}
                               onChange={(e) =>
@@ -408,6 +425,7 @@ export default function CreateMovement() {
                       <td className="px-4 py-2">
                         <input
                           type="number"
+                          aria-label={t("common.quantity")}
                           min="1"
                           value={line.quantity}
                           onChange={(e) =>
@@ -431,10 +449,11 @@ export default function CreateMovement() {
                       <td className="px-4 py-2 text-center">
                         <button
                           type="button"
+                          aria-label={t("stockMovements.removeLine")}
                           onClick={() => handleDeleteLine(index)}
                           className="text-red-500 hover:text-red-700 text-lg"
                         >
-                          ✕
+                          <span aria-hidden="true">✕</span>
                         </button>
                         <div className="min-h-[1.25rem]"></div>
                       </td>
@@ -451,7 +470,7 @@ export default function CreateMovement() {
                 onClick={handleAddLine}
                 className="text-sm text-indigo-600 hover:underline"
               >
-                + Add line
+                {"+ " + t("stockMovements.addLine")}
               </button>
             </div>
           </div>
@@ -461,7 +480,7 @@ export default function CreateMovement() {
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
             >
-              Save Movement
+              {t("stockMovements.save")}
             </button>
           </div>
         </form>

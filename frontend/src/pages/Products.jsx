@@ -1,3 +1,7 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
+import { chartValue, chartTooltipStyle, chartLegendStyle, isolateText } from "../i18n/display.js";
+import PersianPieLabel from "../components/PersianPieLabel";
 import { Link, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
@@ -15,6 +19,7 @@ import { generateColors } from "../utils/other";
 import HoverMessage from "../components/HoverMessage";
 
 export default function Products() {
+  const [loadError, setLoadError] = useState("");
   const [categoryData, setCategoryData] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [productsInCategory, setProductsInCategory] = useState([]);
@@ -24,9 +29,11 @@ export default function Products() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoadError("");
         const data = await getStockByCategory(accessToken);
         setCategoryData(data);
       } catch (err) {
+        setLoadError(errorMessage(err));
         console.error("Error fetching stock by category:", err.message);
       }
     };
@@ -35,7 +42,7 @@ export default function Products() {
   }, [accessToken]);
 
   useEffect(() => {
-    document.title = "Products";
+    document.title = t("navigation.products");
   }, []);
 
   const goToExpiration = () => {
@@ -47,6 +54,7 @@ export default function Products() {
 
   const handleCategoryClick = async (category) => {
     try {
+      setLoadError("");
       setSelectedCategory(category);
       const products = await getProductsByCategory(
         category.category_id,
@@ -54,6 +62,7 @@ export default function Products() {
       );
       setProductsInCategory(products);
     } catch (error) {
+      setLoadError(errorMessage(error));
       console.error("Error loading products by category:", error.message);
     }
   };
@@ -62,14 +71,15 @@ export default function Products() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">Products</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("navigation.products")}</h1>
 
           {/* Quick access buttons */}
           <div className="bg-white shadow rounded p-4">
             <h2 className="text-lg text-center font-semibold mb-4">
-              Quick Access
+              {t("common.quickAccess")}
             </h2>
             <div className="flex flex-wrap gap-4 justify-center">
               {user?.role === "admin" && (
@@ -77,21 +87,21 @@ export default function Products() {
                   to="/products/new"
                   className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-medium"
                 >
-                  + Create product
+                  {"+ " + t("navigation.createProduct")}
                 </Link>
               )}
               <Link
                 to="/products/list"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-medium"
               >
-                📋 View list
+                {"📋 " + t("common.viewList")}
               </Link>
               <button
                 role="button"
                 onClick={goToExpiration}
                 className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-medium"
               >
-                🧪 Products expiring soon
+                {"🧪 " + t("navigation.expiringProducts")}
               </button>
             </div>
           </div>
@@ -101,19 +111,19 @@ export default function Products() {
             {/* Pie: Stock by category */}
             <div className="relative group bg-white rounded-lg shadow p-4">
               <h2 className="text-center text-lg font-semibold text-gray-700 mb-4">
-                Total stock by category
+                {t("charts.stockByCategory")}
               </h2>
               <div className="flex justify-center items-center">
                 {categoryData.length > 0 ? (
                   <div className="overflow-x-auto">
                     <div className="min-w-[400px]">
-                      <PieChart width={550} height={250}>
+                      <PieChart style={{ direction: "ltr" }} width={550} height={250}>
                         <Pie
                           data={categoryData}
                           dataKey="total_quantity"
                           nameKey="category_name"
                           outerRadius={80}
-                          label
+                          label={<PersianPieLabel />}
                           onClick={(data) => handleCategoryClick(data)}
                           className="cursor-pointer"
                         >
@@ -126,35 +136,35 @@ export default function Products() {
                             />
                           ))}
                         </Pie>
-                        <Tooltip />
-                        <Legend align="right" verticalAlign="middle" width={200} />
+                        <Tooltip formatter={chartValue} contentStyle={chartTooltipStyle} />
+                        <Legend wrapperStyle={chartLegendStyle} align="right" verticalAlign="middle" width={200} />
                       </PieChart>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">Loading data...</p>
+                  <p className="text-sm text-gray-500">{t("common.loading")}</p>
                 )}
               </div>
-              <HoverMessage text="Click a category to see its products." />
+              <HoverMessage text={t("charts.categoryHelp")} />
             </div>
 
             {/* Pie: Products in selected category */}
             {selectedCategory && (
               <div className="relative group bg-white rounded-lg shadow p-4">
                 <h2 className="text-center text-lg font-semibold text-gray-700 mb-4">
-                  Products in {selectedCategory.category_name}
+                  {t("charts.productsIn", { name: isolateText(selectedCategory.category_name) })}
                 </h2>
                 <div className="flex justify-center items-center">
                   {productsInCategory.length > 0 ? (
                     <div className="overflow-x-auto">
                       <div className="min-w-[400px]">
-                        <PieChart width={550} height={250}>
+                        <PieChart style={{ direction: "ltr" }} width={550} height={250}>
                           <Pie
                             data={productsInCategory}
                             dataKey="total_quantity"
                             nameKey="product_name"
                             outerRadius={80}
-                            label
+                            label={<PersianPieLabel />}
                             onClick={(data) =>
                               navigate(`/products/${data.product_id}`)
                             }
@@ -169,18 +179,18 @@ export default function Products() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip />
-                          <Legend align="right" verticalAlign="middle" width={200} />
+                          <Tooltip formatter={chartValue} contentStyle={chartTooltipStyle} />
+                          <Legend wrapperStyle={chartLegendStyle} align="right" verticalAlign="middle" width={200} />
                         </PieChart>
                       </div>
                     </div>
                   ) : (
                     <p className="text-sm text-gray-500">
-                      No products in this category.
+                      {t("products.emptyCategory")}
                     </p>
                   )}
                 </div>
-                <HoverMessage text="Click a product to view its details." />
+                <HoverMessage text={t("charts.productDetailHelp")} />
               </div>
             )}
           </div>

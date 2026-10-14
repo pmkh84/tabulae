@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
+    "test:localization": "node --test tests/localization.test.mjs tests/application-localization.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

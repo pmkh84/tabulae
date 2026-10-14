@@ -1,4 +1,5 @@
-export default function ExportCSVButton({ onExport, label = "Export CSV" }) {
+import { t } from "../i18n/index.js";
+export default function ExportCSVButton({ onExport, label = t("common.exportCSV") }) {
   return (
     <button
       role="button"

@@ -1,3 +1,6 @@
+import { errorMessage } from "../i18n/errors.js";
+import { isolateText } from "../i18n/display.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -37,7 +40,7 @@ export default function WarehouseStock() {
         }
       } catch (error) {
         console.error("Failed to fetch warehouse stock:", error);
-        alert("Failed to load stock for this warehouse.");
+        alert(errorMessage(error));
         navigate("/warehouses");
       } finally {
         setIsLoading(false);
@@ -48,7 +51,7 @@ export default function WarehouseStock() {
   }, [warehouse_id, accessToken, limit, offset, navigate]);
 
   useEffect(() => {
-    document.title = "Stock by Warehouse";
+    document.title = t("breadcrumbs.warehouseStock");
   }, []);
 
   return (
@@ -58,7 +61,7 @@ export default function WarehouseStock() {
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold text-gray-800">
-            Stock in {warehouseName} (#{warehouse_id})
+            {t("stock.warehouseTitle", { warehouse: isolateText(warehouseName), id: isolateText(warehouse_id, "ltr") })}
           </h1>
 
           <button
@@ -66,14 +69,14 @@ export default function WarehouseStock() {
             onClick={() => navigate(-1)}
             className="text-indigo-600 hover:underline text-sm"
           >
-            ← Back
+            {"→ " + t("common.back")}
           </button>
 
           {isLoading ? (
-            <p className="text-sm text-gray-600">Loading...</p>
+            <p className="text-sm text-gray-600">{t("common.loading")}</p>
           ) : stock.length === 0 ? (
             <p className="text-sm text-gray-600">
-              No stock registered in this warehouse.
+              {t("stock.emptyWarehouse")}
             </p>
           ) : (
             <>

@@ -1,3 +1,5 @@
+import { errorMessage } from "../i18n/errors.js";
+import { t } from "../i18n/index.js";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -8,6 +10,7 @@ import { getCategories, createProduct } from "../api/products";
 import CreateInlineCategory from "../components/CreateInlineCategory";
 
 export default function NewProduct() {
+  const [loadError, setLoadError] = useState("");
   const { accessToken } = useAuth();
   const navigate = useNavigate();
 
@@ -24,9 +27,11 @@ export default function NewProduct() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoadError("");
         const list = await getCategories(accessToken);
         setCategories(list);
       } catch (error) {
+        setLoadError(errorMessage(error));
         console.error("Error loading categories:", error);
       }
     };
@@ -35,7 +40,7 @@ export default function NewProduct() {
   }, [accessToken]);
 
   useEffect(() => {
-    document.title = "New Product";
+    document.title = t("navigation.createProduct");
   }, []);
 
   const handleChange = (e) => {
@@ -44,9 +49,9 @@ export default function NewProduct() {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.sku.trim()) newErrors.sku = "SKU is required";
-    if (!form.short_name.trim()) newErrors.short_name = "Name is required";
-    if (!form.category_id) newErrors.category_id = "Category is required";
+    if (!form.sku.trim()) newErrors.sku = t("validation.required");
+    if (!form.short_name.trim()) newErrors.short_name = t("validation.required");
+    if (!form.category_id) newErrors.category_id = t("validation.required");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -58,11 +63,11 @@ export default function NewProduct() {
 
     try {
       await createProduct(form, accessToken);
-      alert("Product created successfully");
+      alert(t("products.created"));
       navigate("/products/list");
     } catch (error) {
       console.error(error);
-      alert("Error creating product:\n" + error.message);
+      alert(t("errors.actionFailed") + "\n" + errorMessage(error));
     }
   };
 
@@ -70,9 +75,10 @@ export default function NewProduct() {
     <>
       <Navbar />
       <Breadcrumb />
+      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800">New Product</h1>
+          <h1 className="text-2xl font-bold text-gray-800">{t("navigation.createProduct")}</h1>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* SKU */}
@@ -81,7 +87,7 @@ export default function NewProduct() {
                 htmlFor="sku"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                SKU
+                {t("common.sku")}
               </label>
               <input
                 id="sku"
@@ -91,7 +97,7 @@ export default function NewProduct() {
                 minLength={3}
                 maxLength={20}
                 pattern="[A-Z0-9]+"
-                title="Only uppercase letters and numbers allowed"
+                title={t("validation.sku")}
                 onChange={handleChange}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
@@ -104,7 +110,7 @@ export default function NewProduct() {
                 htmlFor="short_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Short Name
+                {t("common.shortName")}
               </label>
               <input
                 id="short_name"
@@ -125,7 +131,7 @@ export default function NewProduct() {
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Description
+                {t("common.description")}
               </label>
               <textarea
                 id="description"
@@ -144,7 +150,7 @@ export default function NewProduct() {
                 htmlFor="category_id"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Category
+                {t("common.category")}
               </label>
               <select
                 id="category_id"
@@ -154,7 +160,7 @@ export default function NewProduct() {
                 required
                 className="w-full bg-white h-[36px] rounded border border-gray-300 px-2 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               >
-                <option value="">Select a category</option>
+                <option value="">{t("products.selectCategory")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -178,7 +184,7 @@ export default function NewProduct() {
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                Save product
+                {t("products.save")}
               </button>
               <button
                 role="button"
@@ -186,7 +192,7 @@ export default function NewProduct() {
                 onClick={() => navigate("/products/list")}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </form>

@@ -13,6 +13,8 @@ import { useLocation, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useWebSocket from "../hooks/useWebSocket";
+import { t } from "../i18n/index.js";
+import { translateNotification } from "../i18n/notifications.js";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -43,38 +45,38 @@ export default function Navbar() {
   });
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard" },
+    { name: t("navigation.dashboard"), href: "/dashboard" },
     {
-      name: "Products",
+      name: t("navigation.products"),
       href: "/products",
       submenu: [
-        { name: "List", href: "/products/list" },
+        { name: t("common.list"), href: "/products/list" },
         user?.role === "admin" && {
-          name: "Create new",
+          name: t("navigation.createProduct"),
           href: "/products/new",
         },
-        { name: "Products expiring soon", href: "/expiration?preset=expiring_soon" },
+        { name: t("navigation.expiringProducts"), href: "/expiration?preset=expiring_soon" },
         user?.role === "admin" && {
-          name: "Manage categories",
+          name: t("navigation.categories"),
           href: "/categories",
         },
       ].filter(Boolean),
     },
     {
-      name: "Stock movements",
+      name: t("navigation.stockMovements"),
       href: "/stock-movements",
       submenu: [
-        { name: "List", href: "/stock-movements/list" },
-        { name: "Create new", href: "/stock-movements/new" },
+        { name: t("common.list"), href: "/stock-movements/list" },
+        { name: t("navigation.createMovement"), href: "/stock-movements/new" },
       ],
     },
     {
-      name: "Warehouses",
+      name: t("navigation.warehouses"),
       href: "/warehouses",
       submenu: [
-        { name: "List", href: "/warehouses/list" },
+        { name: t("common.list"), href: "/warehouses/list" },
         user?.role === "admin" && {
-          name: "Create new",
+          name: t("navigation.createWarehouse"),
           href: "/warehouses/new",
         },
       ].filter(Boolean),
@@ -83,32 +85,32 @@ export default function Navbar() {
 
   if (user?.role === "admin") {
     navigation.push({
-      name: "Users",
+      name: t("navigation.users"),
       href: "/users",
       submenu: [
-        { name: "List", href: "/users" },
-        { name: "Create new", href: "/users/new" },
+        { name: t("common.list"), href: "/users" },
+        { name: t("navigation.createUser"), href: "/users/new" },
       ],
     });
   }
 
   return (
-    <Disclosure as="nav" className="bg-indigo-600">
+    <Disclosure as="nav" aria-label={t("navigation.main")} className="bg-indigo-600">
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           {/* Mobile menu button */}
-          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
+          <div className="absolute inset-y-0 start-0 flex items-center sm:hidden">
             <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-indigo-700 hover:text-white focus:ring-2 focus:ring-white focus:outline-hidden focus:ring-inset">
-              <span className="sr-only">Open main menu</span>
-              <Bars3Icon className="block size-6 group-data-open:hidden" />
-              <XMarkIcon className="hidden size-6 group-data-open:block" />
+              <span className="sr-only">{t("navigation.openMainMenu")}</span>
+              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
+              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
             </DisclosureButton>
           </div>
 
           {/* Main navigation */}
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-            <div className="hidden sm:ml-6 sm:block">
-              <div className="flex space-x-4">
+            <div className="hidden sm:ms-6 sm:block">
+              <div className="flex gap-4">
                 {navigation.map((item) => {
                   if (!item.submenu) {
                     return (
@@ -132,7 +134,7 @@ export default function Navbar() {
                     <Menu
                       as="div"
                       key={item.name}
-                      className="relative inline-block text-left"
+                      className="relative inline-block text-start"
                     >
                       <div className="flex items-center">
                         <Link
@@ -141,16 +143,19 @@ export default function Navbar() {
                             location.pathname === item.href
                               ? "bg-indigo-900 text-white"
                               : "text-gray-300 hover:bg-indigo-700 hover:text-white",
-                            "rounded-l-md px-3 py-2 text-sm font-medium"
+                            "rounded-s-md px-3 py-2 text-sm font-medium"
                           )}
                         >
                           {item.name}
                         </Link>
-                        <MenuButton className="rounded-r-md px-2 py-2 text-sm font-medium text-gray-300 hover:bg-indigo-700 hover:text-white">
-                          ▾
+                        <MenuButton
+                          aria-label={t("navigation.toggleSubmenu", { name: item.name })}
+                          className="rounded-e-md px-2 py-2 text-sm font-medium text-gray-300 hover:bg-indigo-700 hover:text-white"
+                        >
+                          <span aria-hidden="true">▾</span>
                         </MenuButton>
                       </div>
-                      <MenuItems className="absolute z-10 mt-2 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
+                      <MenuItems className="absolute start-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
                         {item.submenu.map((subitem) => (
                           <MenuItem key={subitem.href}>
                             <Link
@@ -170,43 +175,52 @@ export default function Navbar() {
           </div>
 
           {/* Notifications and user menu */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-            <button
-              type="button"
-              className="relative"
-              onClick={() => {
-                setShowDropdown((prev) => !prev);
-                setActiveNotification(false);
-              }}
-            >
-              <span className="sr-only">View notifications</span>
-              <BellIcon className="size-6 text-white" />
-              {activeNotification && (
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-ping" />
-              )}
+          <div className="absolute inset-y-0 end-0 flex items-center pe-2 sm:static sm:inset-auto sm:ms-6 sm:pe-0">
+            <div className="relative">
+              <button
+                type="button"
+                className="relative"
+                aria-expanded={showDropdown}
+                aria-controls="shell-notifications"
+                onClick={() => {
+                  setShowDropdown((prev) => !prev);
+                  setActiveNotification(false);
+                }}
+              >
+                <span className="sr-only">{t("notifications.view")}</span>
+                <BellIcon aria-hidden="true" className="size-6 text-white" />
+                {activeNotification && (
+                  <span aria-hidden="true" className="absolute top-0 end-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-ping" />
+                )}
+              </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 z-50">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Notifications
+                <div id="shell-notifications" role="region" aria-labelledby="shell-notifications-title" className="absolute end-0 mt-2 w-64 bg-white shadow-lg rounded-lg p-4 z-50">
+                  <h3 id="shell-notifications-title" className="text-sm font-semibold text-gray-700 mb-2">
+                    {t("notifications.title")}
                   </h3>
                   <ul className="space-y-1 text-sm text-gray-600 max-h-48 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <li className="italic text-gray-400">
-                        No recent notifications
+                        {t("notifications.empty")}
                       </li>
                     ) : (
                       notifications.map((message, idx) => (
                         <li
                           key={idx}
-                          className="flex justify-between items-center cursor-pointer hover:bg-gray-100 p-1 rounded"
-                          onClick={() => navigate("/stock-movements/list", { state: { refreshAt: Date.now() } })}
+                          className="flex justify-between items-center hover:bg-gray-100 p-1 rounded"
                         >
-                          <span>• {message}</span>
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            className="text-lg text-red-500 hover:text-red-700 ml-2"
+                          <button
+                            type="button"
+                            className="flex-1 text-start cursor-pointer"
+                            onClick={() => navigate("/stock-movements/list", { state: { refreshAt: Date.now() } })}
+                          >
+                            <span dir="auto">• {translateNotification(message)}</span>
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={t("notifications.dismiss")}
+                            className="text-lg text-red-500 hover:text-red-700 ms-2 cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               const updated = notifications.filter(
@@ -218,53 +232,40 @@ export default function Navbar() {
                                 JSON.stringify(updated)
                               );
                             }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.stopPropagation();
-                                const updated = notifications.filter(
-                                  (_, i) => i !== idx
-                                );
-                                setNotifications(updated);
-                                localStorage.setItem(
-                                  "notifications",
-                                  JSON.stringify(updated)
-                                );
-                              }
-                            }}
                           >
-                            ✕
-                          </span>
+                            <span aria-hidden="true">✕</span>
+                          </button>
                         </li>
                       ))
                     )}
                   </ul>
                 </div>
               )}
-            </button>
+            </div>
 
-            <Menu as="div" className="relative ml-3">
+            <Menu as="div" className="relative ms-3">
               <div>
                 <MenuButton className="relative flex items-center rounded-full bg-indigo-600 px-3 py-1 text-sm font-medium text-white focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600 focus:outline-hidden hover:bg-indigo-700 hover:text-white">
-                  <span className="sr-only">Open user menu</span>
-                  {user?.name || "User"}
+                  <span className="sr-only">{t("navigation.openUserMenu")}</span>
+                  <bdi>{user?.name || t("common.user")}</bdi>
                 </MenuButton>
               </div>
-              <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5">
+              <MenuItems className="absolute end-0 z-10 mt-2 w-48 origin-top-left rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5">
                 <MenuItem>
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Your profile
+                    {t("navigation.profile")}
                   </Link>
                 </MenuItem>
                 <MenuItem>
                   <button
                     role="button"
                     onClick={logout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="block w-full text-start px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >
-                    Log out
+                    {t("navigation.logout")}
                   </button>
                 </MenuItem>
               </MenuItems>
@@ -304,9 +305,10 @@ export default function Navbar() {
                   >
                     {item.name}
                   </Link>
-                  <DisclosureButton className="text-gray-300 hover:text-white">
+                  <DisclosureButton aria-label={t("navigation.toggleSubmenu", { name: item.name })} className="text-gray-300 hover:text-white">
                     <svg
-                      className="ml-2 h-5 w-5"
+                      aria-hidden="true"
+                      className="ms-2 h-5 w-5"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -322,7 +324,7 @@ export default function Navbar() {
                   </DisclosureButton>
                 </div>
 
-                <DisclosurePanel className="space-y-1 pl-4">
+                <DisclosurePanel className="space-y-1 ps-4">
                   {item.submenu.map((subitem) => (
                     <Link
                       key={subitem.href}

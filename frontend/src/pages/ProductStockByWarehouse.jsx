@@ -1,3 +1,8 @@
+import { errorMessage } from "../i18n/errors.js";
+import { isolateText } from "../i18n/display.js";
+import { chartValue, chartTooltipStyle, chartLegendStyle } from "../i18n/display.js";
+import { formatNumber, formatDate } from "../utils/format.js";
+import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -24,7 +29,7 @@ export default function ProductStockByWarehouse() {
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    document.title = "Product Stock by Warehouse";
+    document.title = t("breadcrumbs.productStockByWarehouse");
   }, []);
 
   useEffect(() => {
@@ -70,7 +75,7 @@ export default function ProductStockByWarehouse() {
 
       } catch (error) {
         console.error("Error fetching product stock:", error);
-        alert("Could not load product stock for this warehouse.");
+        alert(errorMessage(error));
         navigate("/warehouses");
       } finally {
         setIsLoading(false);
@@ -87,7 +92,7 @@ export default function ProductStockByWarehouse() {
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold text-gray-800">
-            Stock of {productName} in {warehouseName} (#{warehouse_id})
+            {t("stock.productWarehouseTitle", { product: isolateText(productName), warehouse: isolateText(warehouseName), id: isolateText(warehouse_id, "ltr") })}
           </h1>
 
           <button
@@ -95,27 +100,27 @@ export default function ProductStockByWarehouse() {
             onClick={() => navigate(-1)}
             className="text-indigo-600 hover:underline text-sm"
           >
-            ← Go back
+            {"→ " + t("common.back")}
           </button>
 
           {/* History chart */}
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Stock history
+            {t("charts.stockHistory")}
           </h2>
           <div className="bg-white rounded shadow p-4">
             {history.length === 0 ? (
               <p className="text-sm text-gray-500">
-                No recorded movements for this product.
+                {t("stockMovements.emptyProduct")}
               </p>
             ) : (
               <div className="overflow-x-auto">
                 <div className="min-w-[600px]">
-                  <LineChart width={600} height={300} data={history}>
-                    <XAxis dataKey="created_at" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="quantity" stroke="#10b981" />
+                  <LineChart width={600} height={300} data={history} style={{ direction: "ltr" }}>
+                    <XAxis dataKey="created_at" tickFormatter={(value) => formatDate(value)} />
+                    <YAxis tickFormatter={(value) => formatNumber(value)} />
+                    <Tooltip formatter={chartValue} contentStyle={chartTooltipStyle} labelFormatter={(value) => formatDate(value)} />
+                    <Legend wrapperStyle={chartLegendStyle} />
+                    <Line type="monotone" dataKey="quantity" stroke="#10b981" name={t("common.quantity")} />
                   </LineChart>
                 </div>
               </div>
@@ -123,34 +128,34 @@ export default function ProductStockByWarehouse() {
           </div>
 
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Current stock
+            {t("stock.current")}
           </h2>
           {isLoading ? (
-            <p className="text-sm text-gray-600">Loading...</p>
+            <p className="text-sm text-gray-600">{t("common.loading")}</p>
           ) : stock.length === 0 ? (
             <p className="text-sm text-gray-600">
-              No stock registered for this product in this warehouse.
+              {t("stock.emptyProductWarehouse")}
             </p>
           ) : (
             <div className="overflow-x-auto bg-white shadow rounded">
               <table className="min-w-full divide-y divide-gray-200 text-sm text-gray-800">
-                <thead className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase">
+                <thead className="bg-gray-50 text-start text-xs font-semibold text-gray-500">
                   <tr>
-                    <th className="px-4 py-3">SKU</th>
-                    <th className="px-4 py-3">Lot</th>
-                    <th className="px-4 py-3">Expiration date</th>
-                    <th className="px-4 py-3">Quantity</th>
+                    <th className="px-4 py-3">{t("common.sku")}</th>
+                    <th className="px-4 py-3">{t("common.lot")}</th>
+                    <th className="px-4 py-3">{t("common.expiration")}</th>
+                    <th className="px-4 py-3">{t("common.quantity")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {stock.map((item, idx) => (
                     <tr key={idx} className="hover:bg-gray-50">
-                      <td className="px-4 py-2">{item.sku}</td>
-                      <td className="px-4 py-2">{item.lot}</td>
+                      <td className="px-4 py-2"><bdi dir="ltr">{item.sku}</bdi></td>
+                      <td className="px-4 py-2"><bdi dir="ltr">{item.lot}</bdi></td>
                       <td className="px-4 py-2">
-                        {item.expiring ? item.expiring.split("T")[0] : "-"}
+                        {formatDate(item.expiring)}
                       </td>
-                      <td className="px-4 py-2">{item.quantity}</td>
+                      <td className="px-4 py-2">{formatNumber(item.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
