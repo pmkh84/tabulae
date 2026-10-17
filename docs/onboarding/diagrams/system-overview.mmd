@@ -1,0 +1,6 @@
+flowchart LR
+  Browser[مرورگر و React] -->|HTTP JSON و Bearer JWT| API[FastAPI]
+  Browser -->|WebSocket با token اولیه| WS[مسیر stock-moves]
+  API -->|SQLAlchemy async و asyncpg| DB[(PostgreSQL)]
+  WS --> DB
+  DB -->|trigger درج سطر حرکت| Stock[جدول stock]

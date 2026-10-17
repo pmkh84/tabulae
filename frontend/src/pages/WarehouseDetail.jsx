@@ -1,46 +1,38 @@
-import { errorMessage } from "../i18n/errors.js";
 import { t } from "../i18n/index.js";
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useCallback, useEffect } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import { useAuth } from "../context/useAuth";
 import { getWarehouseById } from "../api/warehouses";
+import { useWarehouseRequest } from "../hooks/useWarehouseRequest.js";
+import { checkedWarehouse } from "../utils/warehouseForm.js";
+import { warehouseReturnTo } from "../utils/warehouseNavigation.js";
+import WarehouseRequestFeedback from "../components/WarehouseRequestFeedback";
 
 export default function WarehouseDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
-  const [warehouse, setWarehouse] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchWarehouse = async () => {
-      try {
-        const data = await getWarehouseById(id, accessToken);
-        setWarehouse(data);
-      } catch (error) {
-        console.error("Failed to load warehouse:", error);
-        alert(errorMessage(error));
-        navigate("/warehouses/list");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWarehouse();
-  }, [id, accessToken, navigate]);
+  const location = useLocation();
+  const returnTo = warehouseReturnTo(location.state);
+  const loader = useCallback(async () => checkedWarehouse(await getWarehouseById(id, accessToken), id), [id, accessToken]);
+  const request = useWarehouseRequest(loader, location.key);
+  const warehouse = request.data;
 
   useEffect(() => {
     document.title = t("breadcrumbs.warehouseDetail");
   }, []);
 
-  if (isLoading) {
+  if (request.status !== "ready") {
     return (
       <>
         <Navbar />
-        <Breadcrumb />
-        <div className="p-6 text-gray-700">{t("warehouses.loading")}</div>
+        <Breadcrumb navigationState={{ warehouseReturnTo: returnTo }} linkTargets={{ "/warehouses/list": returnTo }} />
+        <div className="p-6 space-y-3">
+          <WarehouseRequestFeedback request={request} />
+          <button type="button" onClick={() => navigate(returnTo)} className="text-sm text-indigo-600 hover:underline">{t("common.backToList")}</button>
+        </div>
       </>
     );
   }
@@ -50,15 +42,16 @@ export default function WarehouseDetail() {
   return (
     <>
       <Navbar />
-      <Breadcrumb />
+      <Breadcrumb navigationState={{ warehouseReturnTo: returnTo }} linkTargets={{ "/warehouses/list": returnTo }} />
       <div className="p-6">
         <div className="max-w-3xl mx-auto space-y-4">
+          {location.state?.warehouseFeedback === "updated" && <p role="status" className="text-sm text-green-700">{t("warehouses.updated")}</p>}
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             {t("breadcrumbs.warehouseDetail")}
           </h1>
           <button
             role="button"
-            onClick={() => navigate(`/warehouses/list`)}
+            onClick={() => navigate(returnTo)}
             className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
             {"→ " + t("common.backToList")}
@@ -80,7 +73,7 @@ export default function WarehouseDetail() {
             <div className="flex gap-4 pt-4">
               <button
                 role="button"
-                onClick={() => navigate(`/warehouses/${warehouse.id}/edit`)}
+                onClick={() => navigate(`/warehouses/${warehouse.id}/edit`, { state: { warehouseReturnTo: returnTo } })}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm"
               >
                 {t("breadcrumbs.editWarehouse")}

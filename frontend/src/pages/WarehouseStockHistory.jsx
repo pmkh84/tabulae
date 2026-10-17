@@ -1,41 +1,53 @@
-import { errorMessage } from "../i18n/errors.js";
 import { isolateText, chartValue, chartTooltipStyle, chartLegendStyle, movementTypeLabel } from "../i18n/display.js";
 import { formatNumber, formatDate } from "../utils/format.js";
 import { t } from "../i18n/index.js";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import { useAuth } from "../context/useAuth";
 import { getWarehouseHistory } from "../api/stock";
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import Pagination from "../components/Pagination";
+import { checkedWarehouseStockPage, warehouseErrorFeedback } from "../utils/warehouseForm.js";
+import { warehouseListContext, warehouseReturnTo, warehouseStockReturnTo, updateWarehouseQuery } from "../utils/warehouseNavigation.js";
 
 export default function WarehouseStockHistory() {
   const [loadError, setLoadError] = useState("");
   const { warehouse_id } = useParams();
   const { accessToken } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = warehouseReturnTo(location.state);
+  const stockReturnTo = warehouseStockReturnTo(location.state, warehouse_id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { offset } = warehouseListContext(searchParams);
+  const [revision, setRevision] = useState(0);
+  const [tableError, setTableError] = useState("");
+  const [chartLoading, setChartLoading] = useState(true);
 
   const [warehouseName, setWarehouseName] = useState("");
   const [stockChart, setStockChart] = useState([]);
   const [historyTable, setHistoryTable] = useState([]);
   const [limit] = useState(10);
-  const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load chart data (once)
   useEffect(() => {
+    let current = true;
     const fetchChart = async () => {
       try {
+        setChartLoading(true);
+        setStockChart([]); setWarehouseName("");
         setLoadError("");
         const result = await getWarehouseHistory(
           warehouse_id,
           accessToken,
           100
         );
-        const data = result.data;
+        if (!current) return;
+        const data = checkedWarehouseStockPage(result).data;
 
         if (data.length > 0) {
           setWarehouseName(data[0].warehouse_name || "");
@@ -57,38 +69,41 @@ export default function WarehouseStockHistory() {
 
         setStockChart(cumulative);
       } catch (error) {
-        setLoadError(errorMessage(error));
-        console.error("Error loading chart:", error);
-      }
+        if (current) setLoadError(warehouseErrorFeedback(error).message);
+      } finally { if (current) setChartLoading(false); }
     };
 
     fetchChart();
-  }, [warehouse_id, accessToken]);
+    return () => { current = false; };
+  }, [warehouse_id, accessToken, revision]);
 
   // Load table data (with pagination)
   useEffect(() => {
+    let current = true;
     const fetchTable = async () => {
       try {
         setIsLoading(true);
+        setTableError(""); setHistoryTable([]); setTotal(0);
         const result = await getWarehouseHistory(
           warehouse_id,
           accessToken,
           limit,
           offset
         );
+        if (!current) return;
+        checkedWarehouseStockPage(result);
         setHistoryTable(result.data);
         setTotal(result.total);
       } catch (error) {
-        console.error("Error loading history:", error);
-        alert(errorMessage(error));
-        navigate("/warehouses");
+        if (current) setTableError(warehouseErrorFeedback(error).message);
       } finally {
-        setIsLoading(false);
+        if (current) setIsLoading(false);
       }
     };
 
     fetchTable();
-  }, [warehouse_id, accessToken, limit, offset, navigate]);
+    return () => { current = false; };
+  }, [warehouse_id, accessToken, limit, offset, revision]);
 
   useEffect(() => {
     document.title = t("breadcrumbs.warehouseStockHistory");
@@ -97,8 +112,7 @@ export default function WarehouseStockHistory() {
   return (
     <>
       <Navbar />
-      <Breadcrumb />
-      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
+      <Breadcrumb navigationState={{ warehouseReturnTo: returnTo, warehouseStockReturnTo: stockReturnTo }} linkTargets={{ "/warehouses/list": returnTo, [`/stock/warehouse/${warehouse_id}`]: stockReturnTo }} />
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold text-gray-800">
@@ -107,7 +121,7 @@ export default function WarehouseStockHistory() {
 
           <button
             role="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(stockReturnTo, { state: { warehouseReturnTo: returnTo } })}
             className="text-indigo-600 hover:underline text-sm"
           >
             {"→ " + t("common.back")}
@@ -118,7 +132,7 @@ export default function WarehouseStockHistory() {
             <h2 className="text-lg font-semibold text-gray-700 mb-4">
               {t("charts.stockEvolution")}
             </h2>
-            {stockChart.length > 0 ? (
+            {chartLoading ? <p role="status" className="text-sm text-gray-600">{t("common.loading")}</p> : loadError ? <p role="alert" className="text-sm text-red-600">{loadError}</p> : stockChart.length > 0 ? (
               <div className="overflow-x-auto">
                 <div className="min-w-[600px]">
                   <LineChart width={600} height={300} data={stockChart} style={{ direction: "ltr" }}>
@@ -145,7 +159,7 @@ export default function WarehouseStockHistory() {
           <div className="bg-white shadow rounded overflow-x-auto">
             {isLoading ? (
               <p className="text-sm text-gray-500">{t("common.loadingHistory")}</p>
-            ) : historyTable.length === 0 ? (
+            ) : tableError ? <p role="alert" className="text-sm text-red-600">{tableError}</p> : historyTable.length === 0 ? (
               <p className="text-sm text-gray-500">
                 {t("stockMovements.empty")}
               </p>
@@ -185,12 +199,14 @@ export default function WarehouseStockHistory() {
             )}
           </div>
 
+          {(loadError || tableError) && <button type="button" onClick={() => setRevision((value) => value + 1)} className="text-sm text-indigo-600 hover:underline">{t("warehouses.retry")}</button>}
+
           {/* Pagination */}
           <Pagination
             total={total}
             limit={limit}
             offset={offset}
-            onPageChange={(newOffset) => setOffset(newOffset)}
+            onPageChange={(value) => setSearchParams(updateWarehouseQuery(searchParams, { offset: value }), { replace: true })}
           />
         </div>
       </div>

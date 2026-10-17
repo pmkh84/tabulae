@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant B as React
+  participant A as auth router
+  participant D as PostgreSQL
+  B->>A: POST /auth/login فرم username/password
+  A->>D: SELECT user by email
+  A-->>B: access_token JSON + refresh_token HttpOnly
+  B->>A: GET /auth/profile با Bearer
+  A->>D: jti revoked? user active?
+  A-->>B: UserResponse
+  B->>A: POST /auth/refresh با cookie
+  A->>D: jti revoked? user active?
+  A-->>B: access_token جدید

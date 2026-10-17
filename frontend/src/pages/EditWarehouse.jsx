@@ -1,86 +1,45 @@
-import { errorMessage } from "../i18n/errors.js";
 import { t } from "../i18n/index.js";
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
 import ErrorMessage from "../components/ErrorMessage";
 import { useAuth } from "../context/useAuth";
-import { getWarehouseById, warehouseUpdate } from "../api/warehouses";
+import { useWarehouseForm } from "../hooks/useWarehouseForm.js";
+import { warehouseReturnTo } from "../utils/warehouseNavigation.js";
+import WarehouseRequestFeedback from "../components/WarehouseRequestFeedback";
 
 export default function EditWarehouse() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
 
-  const [form, setForm] = useState({
-    name: "",
-    is_active: true,
-  });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchWarehouse = async () => {
-      try {
-        const warehouse = await getWarehouseById(id, accessToken);
-        setForm({
-          name: warehouse.name,
-          is_active: warehouse.is_active,
-        });
-      } catch (error) {
-        console.error("Error loading warehouse:", error);
-        alert(errorMessage(error));
-        navigate("/warehouses/list");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchWarehouse();
-  }, [id, accessToken, navigate]);
+  const location = useLocation();
+  const returnTo = warehouseReturnTo(location.state);
+  const editor = useWarehouseForm({ id, accessToken });
+  const { form, errors, isSubmitting, onChange: handleChange } = editor;
 
   useEffect(() => {
     document.title = t("breadcrumbs.editWarehouse");
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm({
-      ...form,
-      [name]: type === "checkbox" ? checked : value,
-    });
-  };
-
-  const validate = () => {
-    const newErrors = {};
-    if (!form.name.trim()) {
-      newErrors.name = t("validation.required");
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    try {
-      await warehouseUpdate(id, form, accessToken);
+    if (await editor.save(() => window.confirm(t("warehouses.confirmDeactivate")))) {
       alert(t("warehouses.updated"));
-      navigate(`/warehouses/${id}`);
-    } catch (error) {
-      console.error("Error updating warehouse:", error);
-      alert(errorMessage(error) || t("errors.actionFailed"));
+      navigate(`/warehouses/${id}`, { state: { warehouseReturnTo: returnTo, warehouseFeedback: "updated" } });
     }
   };
 
-  if (isLoading) {
+  if (editor.load.status !== "ready") {
     return (
       <>
         <Navbar />
-        <Breadcrumb />
-        <div className="p-6 text-gray-700">{t("warehouses.loading")}</div>
+        <Breadcrumb navigationState={{ warehouseReturnTo: returnTo }} linkTargets={{ "/warehouses/list": returnTo }} />
+        <div className="p-6 space-y-3">
+          <WarehouseRequestFeedback request={{ ...editor.load, retry: editor.retry }} />
+          <button type="button" onClick={() => navigate(returnTo)} className="text-sm text-indigo-600 hover:underline">{t("common.backToList")}</button>
+        </div>
       </>
     );
   }
@@ -88,12 +47,13 @@ export default function EditWarehouse() {
   return (
     <>
       <Navbar />
-      <Breadcrumb />
+      <Breadcrumb navigationState={{ warehouseReturnTo: returnTo }} linkTargets={{ "/warehouses/list": returnTo }} />
       <div className="p-6">
         <div className="max-w-xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold text-gray-800">{t("breadcrumbs.editWarehouse")}</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {editor.message && <p role={editor.isNotice ? "status" : "alert"} className="text-sm whitespace-pre-line">{editor.message}</p>}
+          <form ref={editor.formRef} onSubmit={handleSubmit} noValidate aria-busy={isSubmitting} className="space-y-4">
             {/* Name */}
             <div>
               <label
@@ -109,10 +69,13 @@ export default function EditWarehouse() {
                 value={form.name}
                 maxLength={255}
                 required
+                disabled={isSubmitting}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? "name-error" : undefined}
                 onChange={handleChange}
                 className="h-[36px] bg-white w-full rounded border border-gray-300 px-3 py-1 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
-              <ErrorMessage message={errors.name} />
+              <ErrorMessage id="name-error" message={errors.name} />
             </div>
 
             {/* Active (admin only) */}
@@ -123,6 +86,9 @@ export default function EditWarehouse() {
                   type="checkbox"
                   name="is_active"
                   checked={form.is_active}
+                  disabled={isSubmitting}
+                  aria-invalid={Boolean(errors.is_active)}
+                  aria-describedby={errors.is_active ? "is-active-error" : undefined}
                   onChange={handleChange}
                 />
                 <label htmlFor="is_active" className="text-sm text-gray-700">
@@ -130,17 +96,20 @@ export default function EditWarehouse() {
                 </label>
               </div>
             )}
+            <ErrorMessage id="is-active-error" message={errors.is_active} />
 
             <div className="flex gap-3">
               <button
                 type="submit"
+                disabled={!editor.canSubmit}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded"
               >
-                {t("common.saveChanges")}
+                {isSubmitting ? t("common.submitting") : t("common.saveChanges")}
               </button>
               <button
                 type="button"
-                onClick={() => navigate("/warehouses/list")}
+                disabled={isSubmitting}
+                onClick={() => navigate(returnTo)}
                 className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded"
               >
                 {t("common.cancel")}

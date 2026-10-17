@@ -1,0 +1,18 @@
+sequenceDiagram
+  actor U as مدیر
+  participant E as EditProduct
+  participant H as useProductForm
+  participant A as api/products
+  participant R as products.update_product
+  participant D as DB
+  E->>A: GET /products/{id}
+  A-->>H: ProductResponse
+  U->>E: تغییر و ذخیره
+  E->>H: save
+  H->>H: productPayload تغییرها
+  H->>A: updateProduct
+  A->>R: PUT /products/{id} JSON Bearer
+  R->>D: بررسی SKU، دسته، stock
+  R->>D: UPDATE و COMMIT
+  R-->>E: ProductResponse
+  E-->>U: اعلان و صفحهٔ جزئیات

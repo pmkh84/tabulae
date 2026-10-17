@@ -1,0 +1,17 @@
+sequenceDiagram
+  actor U as مدیر
+  participant N as NewProduct
+  participant H as useProductForm
+  participant A as api/products
+  participant R as products.create_product
+  participant D as DB
+  U->>N: ذخیرهٔ فرم
+  N->>H: save
+  H->>H: validateProductForm و payload
+  H->>A: createProduct
+  A->>R: POST /products JSON Bearer
+  R->>D: بررسی SKU و دسته
+  R->>D: INSERT Product و COMMIT
+  R-->>H: ProductResponse
+  H-->>N: محصول ذخیره‌شده
+  N-->>U: اعلان و رفتن به فهرست

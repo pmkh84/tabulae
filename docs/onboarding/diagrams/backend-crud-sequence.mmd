@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant C as Client
+  participant R as products router
+  participant A as require_admin
+  participant D as DB
+  C->>R: POST /products ProductCreate
+  R->>A: بررسی نقش
+  R->>D: SELECT SKU و دسته
+  R->>D: INSERT و COMMIT
+  D-->>R: Product
+  R-->>C: ProductResponse

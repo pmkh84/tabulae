@@ -1,0 +1,10 @@
+flowchart TD
+  Request[درخواست] --> Validate{dependency و schema معتبر؟}
+  Validate -->|خیر| Error[401 / 403 / 422 با detail]
+  Validate -->|بله| Handler[router یا service]
+  Handler --> DB{عملیات DB موفق؟}
+  DB -->|خیر| Rollback[rollback در مسیر write و HTTPException]
+  DB -->|بله| Response[response_model]
+  Error --> Front[apiFetch و LocalizedApiError]
+  Rollback --> Front
+  Response --> Front

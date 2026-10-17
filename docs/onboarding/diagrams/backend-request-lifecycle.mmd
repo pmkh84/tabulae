@@ -1,0 +1,13 @@
+sequenceDiagram
+  participant C as Client
+  participant M as CORS middleware
+  participant R as Router
+  participant X as Depends و Pydantic
+  participant D as AsyncSession
+  C->>M: HTTP request
+  M->>R: route matching
+  R->>X: احراز هویت و validation
+  X->>D: resolve user و DB
+  D-->>R: entity
+  R->>D: query یا commit
+  R-->>C: response_model JSON

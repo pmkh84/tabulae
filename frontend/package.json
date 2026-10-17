@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test:localization": "node --test tests/localization.test.mjs tests/application-localization.test.mjs",
     "test:products": "node --test tests/product-management.test.mjs",
-    "test": "node --test tests/localization.test.mjs tests/application-localization.test.mjs tests/product-management.test.mjs",
+    "test:warehouses": "node --test tests/warehouse-management.test.mjs",
+    "test": "node --test tests/localization.test.mjs tests/application-localization.test.mjs tests/product-management.test.mjs tests/warehouse-management.test.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

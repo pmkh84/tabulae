@@ -1,0 +1,8 @@
+flowchart LR
+  Input[فرم و URL] --> Local[useState و custom hooks]
+  Auth[AuthProvider: token و user] --> Local
+  Local --> Service[src/api]
+  Service --> Backend[FastAPI]
+  Backend --> Service
+  Service --> Local
+  WS[WebSocket اعلان] --> Navbar[Navbar state]

@@ -1,0 +1,9 @@
+flowchart LR
+  Req[HTTP] --> CORS[CORSMiddleware]
+  CORS --> Router[APIRouter]
+  Router --> Depends[get_db و get_current_user]
+  Depends --> Schema[Pydantic schema]
+  Schema --> Logic[Router یا stock_move_service]
+  Logic --> Session[AsyncSession]
+  Session --> PG[(PostgreSQL)]
+  PG --> Response[response_model و JSON]

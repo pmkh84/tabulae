@@ -1,12 +1,11 @@
-import { errorMessage } from "../i18n/errors.js";
 import PersianPieLabel from "../components/PersianPieLabel";
 import { chartValue, chartTooltipStyle, chartLegendStyle, isolateText } from "../i18n/display.js";
 import { formatNumber } from "../utils/format.js";
 import { t } from "../i18n/index.js";
 import Navbar from "../components/Navbar";
 import Breadcrumb from "../components/Breadcrumb";
-import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -25,50 +24,35 @@ import {
 } from "../api/stock";
 import HoverMessage from "../components/HoverMessage";
 import { generateColors } from "../utils/other";
+import { useWarehouseRequest } from "../hooks/useWarehouseRequest.js";
+import { checkedWarehouseChart } from "../utils/warehouseForm.js";
+import WarehouseRequestFeedback from "../components/WarehouseRequestFeedback";
+import { warehouseReturnTo } from "../utils/warehouseNavigation.js";
 
 export default function Warehouses() {
-  const [loadError, setLoadError] = useState("");
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
-  const [warehouses, setWarehouses] = useState([]);
-  const [productsByWarehouse, setProductsByWarehouse] = useState([]);
+  const location = useLocation();
+  const returnTo = warehouseReturnTo(location.state);
   const [selectedWarehouseId, setSelectedWarehouseId] = useState(null);
   const [selectedWarehouseName, setSelectedWarehouseName] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoadError("");
-        const data = await getWarehouseDetail(accessToken);
-        setWarehouses(data);
-      } catch (error) {
-        setLoadError(errorMessage(error));
-        console.error("Error loading stock by warehouse:", error);
-      }
-    };
-
-    fetchData();
-  }, [accessToken]);
+  const warehouseLoader = useCallback(async () => checkedWarehouseChart(await getWarehouseDetail(accessToken)), [accessToken]);
+  const overview = useWarehouseRequest(warehouseLoader, location.key);
+  const warehouses = overview.data ?? [];
+  const productLoader = useCallback(async () => selectedWarehouseId == null ? []
+    : checkedWarehouseChart(await getProductsByWarehousePieChart(selectedWarehouseId, accessToken)), [selectedWarehouseId, accessToken]);
+  const productRequest = useWarehouseRequest(productLoader, location.key);
+  const productsByWarehouse = productRequest.data ?? [];
 
   useEffect(() => {
     document.title = t("navigation.warehouses");
   }, []);
 
-  const handleWarehouseClick = async (warehouseId) => {
-    try {
-      setLoadError("");
-      setSelectedWarehouseId(warehouseId);
-      const warehouse = warehouses.find((w) => w.warehouse_id === warehouseId);
-      setSelectedWarehouseName(warehouse?.warehouse_name || "");
-      const products = await getProductsByWarehousePieChart(
-        warehouseId,
-        accessToken
-      );
-      setProductsByWarehouse(products);
-    } catch (error) {
-      setLoadError(errorMessage(error));
-      console.error("Error fetching products by warehouse:", error.message);
-    }
+  const handleWarehouseClick = (warehouseId) => {
+    setSelectedWarehouseId(warehouseId);
+    const warehouse = warehouses.find((w) => w.warehouse_id === warehouseId);
+    setSelectedWarehouseName(warehouse?.warehouse_name || "");
   };
 
   const handleProductClick = (productId) => {
@@ -81,8 +65,7 @@ export default function Warehouses() {
   return (
     <>
       <Navbar />
-      <Breadcrumb />
-      {loadError && <p role="alert" className="px-6 py-2 text-sm text-red-600 whitespace-pre-line">{loadError}</p>}
+      <Breadcrumb navigationState={{ warehouseReturnTo: returnTo }} linkTargets={{ "/warehouses/list": returnTo }} />
       <div className="p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold text-gray-800">{t("navigation.warehouses")}</h1>
@@ -96,13 +79,14 @@ export default function Warehouses() {
               {user?.role === "admin" && (
                 <Link
                   to="/warehouses/new"
+                  state={{ warehouseReturnTo: returnTo }}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-medium"
                 >
                   {"+ " + t("navigation.createWarehouse")}
                 </Link>
               )}
               <Link
-                to="/warehouses/list"
+                to={returnTo}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-medium"
               >
                 {"📋 " + t("common.viewList")}
@@ -117,6 +101,8 @@ export default function Warehouses() {
               <h2 className="text-lg text-center font-bold text-gray-700 mb-6">
                 {t("charts.stockByWarehouse")}
               </h2>
+              <WarehouseRequestFeedback request={overview} />
+              {overview.status === "ready" && warehouses.length === 0 && <p className="text-sm text-gray-500">{t("common.empty")}</p>}
               <div className="flex justify-center items-center">
                 <div className="overflow-x-auto">
                   <div className="min-w-[400px]">
@@ -146,6 +132,8 @@ export default function Warehouses() {
               <h2 className="text-lg text-center font-bold text-gray-700 mb-2">
                 {t("charts.productsIn", { name: isolateText(selectedWarehouseName ?? t("charts.selectWarehouse")) })}
               </h2>
+              {selectedWarehouseId != null && <WarehouseRequestFeedback request={productRequest} />}
+              {selectedWarehouseId != null && productRequest.status === "ready" && productsByWarehouse.length === 0 && <p className="text-sm text-gray-500">{t("stock.emptyWarehouse")}</p>}
               <div className="flex justify-center items-center">
                 <div className="overflow-x-auto">
                   <div className="min-w-[400px]">

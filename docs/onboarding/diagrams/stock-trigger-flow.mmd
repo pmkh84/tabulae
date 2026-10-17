@@ -1,0 +1,11 @@
+flowchart TD
+  Request[POST movement] --> Validate[بررسی Pydantic و سرویس]
+  Validate --> Header[INSERT stock_move و flush]
+  Header --> Lines[INSERT stock_move_line]
+  Lines --> Trigger[AFTER INSERT trigger]
+  Trigger --> Type{move_type}
+  Type -->|incoming| Upsert[UPSERT stock و افزایش quantity]
+  Type -->|outgoing| Check[SELECT موجودی و UPDATE کاهشی]
+  Check --> Commit[COMMIT]
+  Upsert --> Commit
+  Trigger -->|خطای SQL| Rollback[ROLLBACK کل حرکت]

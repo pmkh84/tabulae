@@ -1,0 +1,9 @@
+flowchart TD
+  Main[main.jsx] --> Providers[BrowserRouter و AuthProvider]
+  Providers --> App[App.jsx: RTL و i18n]
+  App --> Router[AppRouter]
+  Router --> Guards[PublicRoute / PrivateRoute / AdminRoute]
+  Guards --> Pages[pages]
+  Pages --> Shared[Navbar / Breadcrumb / Table / Pagination]
+  Pages --> Hooks[useProductForm / useWarehouseForm / useWebSocket]
+  Hooks --> API[api functions و apiFetch]

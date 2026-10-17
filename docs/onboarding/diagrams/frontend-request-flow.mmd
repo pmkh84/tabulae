@@ -1,0 +1,11 @@
+sequenceDiagram
+  participant P as React page
+  participant A as src/api و apiFetch
+  participant R as FastAPI router
+  participant D as PostgreSQL
+  P->>A: تابع حوزه‌ای با accessToken
+  A->>R: fetch با Bearer و JSON
+  R->>D: query با AsyncSession
+  D-->>R: رکوردها
+  R-->>A: response_model JSON یا detail خطا
+  A-->>P: داده یا LocalizedApiError

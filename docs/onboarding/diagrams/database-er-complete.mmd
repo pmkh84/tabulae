@@ -1,0 +1,59 @@
+erDiagram
+  USER {
+    int id PK
+    string name
+    string email UK
+    string password
+    string role
+    boolean is_active
+  }
+  PRODUCT_CATEGORY {
+    int id PK
+    string name UK
+  }
+  PRODUCT {
+    int id PK
+    string sku UK
+    string short_name
+    string description
+    int category_id FK
+    boolean is_active
+  }
+  WAREHOUSE {
+    int id PK
+    string name
+    boolean is_active
+  }
+  STOCK_MOVE {
+    int id PK
+    datetime created_at
+    string move_type
+    int user_id FK
+  }
+  STOCK_MOVE_LINE {
+    int move_id PK, FK
+    int line_id PK
+    int warehouse_id FK
+    int product_id FK
+    string lot
+    date expiration_date
+    int quantity
+  }
+  STOCK {
+    int warehouse_id PK, FK
+    int product_id PK, FK
+    string lot PK
+    date expiration_date
+    int quantity
+  }
+  REVOKED_TOKENS {
+    string jti PK
+    datetime expires_at
+  }
+  PRODUCT_CATEGORY ||--o{ PRODUCT : category_id
+  USER ||--o{ STOCK_MOVE : user_id
+  STOCK_MOVE ||--o{ STOCK_MOVE_LINE : move_id
+  WAREHOUSE ||--o{ STOCK_MOVE_LINE : warehouse_id
+  PRODUCT ||--o{ STOCK_MOVE_LINE : product_id
+  WAREHOUSE ||--o{ STOCK : warehouse_id
+  PRODUCT ||--o{ STOCK : product_id

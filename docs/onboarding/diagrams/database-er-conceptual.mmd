@@ -1,0 +1,7 @@
+flowchart LR
+  User[کاربر] --> Move[حرکت ورود یا خروج]
+  Move --> Line[خطوط حرکت]
+  Line --> Product[محصول در دسته]
+  Line --> Warehouse[انبار]
+  Line --> Trigger[trigger update_stock]
+  Trigger --> Balance[موجودی به تفکیک انبار + محصول + lot]

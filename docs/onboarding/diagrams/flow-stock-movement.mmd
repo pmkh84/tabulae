@@ -1,0 +1,19 @@
+sequenceDiagram
+  actor U as کاربر
+  participant P as CreateMovement
+  participant A as api/stock_moves
+  participant R as stock_moves.create_movement
+  participant S as create_stock_movement
+  participant D as PostgreSQL
+  participant W as WebSocket manager
+  U->>P: ثبت خطوط
+  P->>A: createMovement(payload)
+  A->>R: POST /stock-movements Bearer
+  R->>S: داده و current_user.id
+  S->>D: SELECT فعال بودن، INSERT move و lines
+  D->>D: trigger update_stock برای هر line
+  S->>D: COMMIT یا ROLLBACK
+  S-->>R: move و lines
+  R->>W: broadcast بعد از commit
+  R-->>P: StockMoveResponse
+  P-->>U: اعلان و فهرست

@@ -1,0 +1,20 @@
+sequenceDiagram
+  actor U as مدیر
+  participant P as NewWarehouse یا EditWarehouse
+  participant H as useWarehouseForm
+  participant A as api/warehouses
+  participant R as warehouses router
+  participant D as DB
+  opt ویرایش
+    H->>A: GET /warehouses/{id}
+    A-->>H: WarehouseResponse
+  end
+  U->>P: ذخیره
+  P->>H: save و تأیید غیرفعال‌سازی
+  H->>A: createWarehouse یا warehouseUpdate
+  A->>R: POST /warehouses یا PUT /warehouses/{id}
+  R->>D: بررسی دسترسی و stock در ویرایش
+  R->>D: INSERT یا UPDATE و COMMIT
+  R-->>H: WarehouseResponse
+  H-->>P: checkedWarehouse
+  P-->>U: اعلان و ناوبری

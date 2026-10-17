@@ -1,0 +1,6 @@
+flowchart LR
+  User[مرورگر] -->|8080 در production / 5173 در dev| Front[Frontend: Nginx یا Vite]
+  User -->|8000، VITE_API_URL| Back[FastAPI]
+  Back -->|DATABASE_URL، شبکهٔ Compose| DB[(PostgreSQL 17)]
+  Init[db_init SQL، فقط volume نو] --> DB
+  Test[pytest، فقط پس از بررسی مقصد] --> TestDB[(db_test، profile test)]

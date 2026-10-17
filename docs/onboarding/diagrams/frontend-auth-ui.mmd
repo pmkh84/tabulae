@@ -1,0 +1,9 @@
+flowchart TD
+  Visit[دیدن route] --> Type{نوع مسیر}
+  Type -->|عمومی| Public[PublicRoute]
+  Type -->|محافظت‌شده| Private[PrivateRoute]
+  Type -->|مدیر| Admin[AdminRoute]
+  Private -->|بدون access token| Login[redirect login]
+  Admin -->|role غیر admin| Dashboard[redirect dashboard]
+  Private -->|مجاز| Page[صفحه]
+  Admin -->|مجاز| Page

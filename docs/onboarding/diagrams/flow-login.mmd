@@ -1,0 +1,17 @@
+sequenceDiagram
+  actor U as کاربر
+  participant L as Login
+  participant P as AuthProvider
+  participant A as api/auth
+  participant R as auth router
+  participant D as DB
+  U->>L: ارسال فرم
+  L->>P: login(email,password)
+  P->>A: loginAPI
+  A->>R: POST /auth/login فرم
+  R->>D: SELECT user
+  R-->>P: access JSON و refresh cookie
+  P->>R: GET /auth/profile با Bearer
+  R->>D: بررسی jti و user
+  R-->>P: UserResponse
+  P-->>U: state و dashboard

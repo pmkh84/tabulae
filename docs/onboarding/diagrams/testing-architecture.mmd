@@ -1,0 +1,6 @@
+flowchart LR
+  FE[Node test: localization/product/warehouse] --> Mock[fixture و SSR، بدون DB زنده]
+  BE[pytest integration] --> Fixture[conftest: create_all و DELETE پیش از هر تست]
+  Fixture --> DB[(db_test فقط پس از تأیید اتصال)]
+  BE --> ASGI[httpx ASGITransport و override get_db]
+  DB -.->|trigger در create_all نصب نمی‌شود| Gap[شکاف با تولید]

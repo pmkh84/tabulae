@@ -1,0 +1,7 @@
+flowchart TD
+  Route[AppRouter] --> Public[PublicRoute]
+  Route --> Private[PrivateRoute]
+  Route --> Admin[AdminRoute]
+  Public --> Login[Login و Register]
+  Private --> Main[Dashboard و گزارش‌ها و فهرست‌ها]
+  Admin --> Edit[ساخت و ویرایش کاربران، محصولات، انبارها و دسته‌ها]
