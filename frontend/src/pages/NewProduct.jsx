@@ -105,13 +105,16 @@ export default function NewProduct() {
                 name="description"
                 disabled={isSubmitting}
                 aria-invalid={Boolean(errors.description)}
-                aria-describedby={errors.description ? "description-error" : undefined}
+                aria-describedby={errors.description ? "description-counter description-error" : "description-counter"}
                 maxLength={500}
                 value={form.description}
                 onChange={handleChange}
                 rows={3}
                 className="w-full bg-white rounded border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
+              <p id="description-counter" className="mt-1 text-sm text-gray-500">
+                {500 - form.description.length} حرف باقی‌مانده
+              </p>
               <ErrorMessage id="description-error" message={errors.description} />
             </div>
 
