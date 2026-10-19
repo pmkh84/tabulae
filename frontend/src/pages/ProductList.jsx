@@ -9,7 +9,7 @@ import {
   getProducts,
   productBulkStatus,
 } from "../api/products";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType, useSearchParams } from "react-router-dom";
 import ProductListTable from "../components/ProductListTable";
 import ExportCSVButton from "../components/ExportCSVButton";
 import { exportFilteredProductsCSV } from "../utils/export";
@@ -27,9 +27,21 @@ export default function ProductList() {
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const navigationType = useNavigationType();
   const [searchParams, setSearchParams] = useSearchParams();
   const { searchTerm, offset, isActive, selectedCategoryId } = productListContext(searchParams);
-  const changeQuery = (changes) => setSearchParams(updateProductListQuery(searchParams, changes), { replace: true });
+  const [searchInput, setSearchInput] = useState(searchTerm);
+  const searchTimer = useRef(null);
+  const appliedSearch = useRef(searchTerm);
+  const searchParamsRef = useRef(searchParams);
+  searchParamsRef.current = searchParams;
+  const changeQuery = (changes) => {
+    const next = updateProductListQuery(searchParamsRef.current, changes);
+    searchParamsRef.current = next;
+    setSearchParams(next, { replace: true });
+  };
+  const changeQueryRef = useRef(changeQuery);
+  changeQueryRef.current = changeQuery;
   const setOffset = (value) => changeQuery({ offset: value });
   const returnTo = location.pathname + location.search;
   const categories = useProductCategories(accessToken);
@@ -39,6 +51,31 @@ export default function ProductList() {
   const limit = 10;
   const [total, setTotal] = useState(0);
   const [selectedIds, setSelectedIds] = useState([]);
+
+  useEffect(() => {
+    if (searchTerm !== appliedSearch.current || navigationType === "POP") { 
+      clearTimeout(searchTimer.current);
+      searchTimer.current = null;
+      setSearchInput(searchTerm);
+    }
+    appliedSearch.current = searchTerm;
+  }, [searchTerm, location.key, navigationType]);
+
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchInput(value);
+    clearTimeout(searchTimer.current);
+    searchTimer.current = null;
+    if (value === "") changeQueryRef.current({ search: "", offset: 0 });
+    else if (value !== searchTerm) {
+      searchTimer.current = setTimeout(() => {
+        searchTimer.current = null;
+        changeQueryRef.current({ search: value, offset: 0 });
+      }, 400);
+    }
+  };
 
   const fetchProducts = useCallback(async () => {
     const version = ++requestVersion.current;
@@ -139,10 +176,8 @@ export default function ProductList() {
           <SearchInput
             label={t("common.search")}
             placeholder={t("products.search")}
-            value={searchTerm}
-            onChange={(e) => {
-              changeQuery({ search: e.target.value, offset: 0 });
-            }}
+            value={searchInput}
+            onChange={handleSearchChange}
           />
 
           {categories.status === "ready" ? <SelectFilter
@@ -232,10 +267,10 @@ export default function ProductList() {
               {t("common.deactivateSelected")}
             </button>
           </div>
-        )}
+        )}  
 
         <div className="mt-4">
-          {isLoading ? (
+          {isLoading || searchInput !== searchTerm ? (
             <p className="text-sm text-gray-500">{t("products.loadingList")}</p>
           ) : loadError ? null : (
             <ProductListTable
@@ -249,7 +284,7 @@ export default function ProductList() {
           )}
         </div>
 
-        {!loadError && !isLoading && <Pagination
+        {!loadError && !isLoading && searchInput === searchTerm && <Pagination
           total={total}
           limit={limit}
           offset={offset}
