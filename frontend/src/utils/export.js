@@ -16,6 +16,7 @@ export async function exportCSVGeneric({
   queryParams = {},
   filename = "export.csv",
   mapFn,
+  preserveWhitespace = false,
 }) {
   try {
     // Build full URL with query parameters
@@ -24,7 +25,7 @@ export async function exportCSVGeneric({
       if (
         value !== null &&
         value !== undefined &&
-        !(typeof value === "string" && value.trim() === "")
+        !(typeof value === "string" && (preserveWhitespace ? value === "" : value.trim() === ""))
       ) {
         url.searchParams.append(key, value);
       }
@@ -108,17 +109,19 @@ export async function exportFilteredProductsCSV({
     offset: 0,
   };
 
-  if (filters.searchTerm?.trim()) queryParams.search = filters.searchTerm;
+  if (filters.searchTerm) queryParams.search = filters.searchTerm;
   if (filters.category_id) queryParams.category_id = filters.category_id;
   if (filters.isActive === "true" || filters.isActive === "false") {
     queryParams.is_active = filters.isActive === "true";
   }
+  if (filters.stockStatus) queryParams.stock_status = filters.stockStatus;
 
   return exportCSVGeneric({
     accessToken,
     apiUrl,
     endpoint: "/products",
     queryParams,
+    preserveWhitespace: true,
     filename: "products.csv",
     mapFn: (p) => ({
       [t("common.sku")]: p.sku,

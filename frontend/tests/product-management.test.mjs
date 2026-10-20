@@ -290,13 +290,29 @@ test("changing product routes ignores an older product response and initializes 
 });
 
 test("navigation preserves query context and rejects external/unrelated return destinations", () => {
-  const search = "?search=" + encodeURIComponent("محصول & SKU") + "&category_id=120&is_active=false&offset=30&extra=keep";
-  assert.deepEqual(productListContext(search), { searchTerm: "محصول & SKU", selectedCategoryId: "120", isActive: "false", offset: 30 });
+  const search = "?search=" + encodeURIComponent("محصول & SKU") + "&category_id=120&is_active=false&stock_status=out_of_stock&offset=30&extra=keep";
+  assert.deepEqual(productListContext(search), { searchTerm: "محصول & SKU", selectedCategoryId: "120", isActive: "false", stockStatus: "out_of_stock", offset: 30 });
   assert.equal(productReturnTo({ productReturnTo: "/products/list" + search }), "/products/list" + search);
   for (const productReturnToValue of ["https://example.test", "//example.test/products/list", "/products/list-other", "/warehouses/list", "javascript:alert(1)"]) assert.equal(productReturnTo({ productReturnTo: productReturnToValue }), "/products/list");
   const changed = updateProductListQuery(search, { search: "new", offset: 0 });
   assert.equal(changed.get("search"), "new"); assert.equal(changed.has("offset"), false); assert.equal(changed.get("extra"), "keep");
+  assert.equal(changed.get("stock_status"), "out_of_stock");
+  assert.equal(productListContext("?stock_status=in_stock").stockStatus, "in_stock");
+  assert.equal(productListContext("?stock_status=invalid").stockStatus, "");
   assert.equal(productListContext("?offset=-1&is_active=invalid&category_id=bad").offset, 0);
+});
+
+test("product list request sends stock status with existing filters and omits the default", async () => {
+  const calls = [];
+  globalThis.fetch = async (input) => { calls.push(new URL(input)); return response({ data: [], total: 0, limit: 10, offset: 0 }); };
+  await api.getProducts({ accessToken: "fixture-token", searchTerm: "raw", category_id: "120", is_active: "false", stock_status: "in_stock" });
+  assert.equal(calls[0].pathname, "/products");
+  assert.equal(calls[0].searchParams.get("search"), "raw");
+  assert.equal(calls[0].searchParams.get("category_id"), "120");
+  assert.equal(calls[0].searchParams.get("is_active"), "false");
+  assert.equal(calls[0].searchParams.get("stock_status"), "in_stock");
+  await api.getProducts({ accessToken: "fixture-token" });
+  assert.equal(calls[1].searchParams.has("stock_status"), false);
 });
 
 function render(element, role = "admin", path = "/products/new") {

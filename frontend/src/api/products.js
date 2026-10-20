@@ -8,6 +8,7 @@ export async function getProducts({
   searchTerm = "",
   category_id = "",
   is_active = "",
+  stock_status = "",
 }) {
   const url = new URL(`${API_URL}/products`);
   url.searchParams.append("limit", limit);
@@ -15,6 +16,7 @@ export async function getProducts({
   if (searchTerm) url.searchParams.append("search", searchTerm);
   if (category_id) url.searchParams.append("category_id", category_id);
   if (is_active !== "") url.searchParams.append("is_active", is_active);
+  if (stock_status) url.searchParams.append("stock_status", stock_status);
 
   const response = await apiFetch(url.toString(), {
     headers: {

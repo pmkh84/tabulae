@@ -29,16 +29,16 @@ export default function ProductList() {
   const location = useLocation();
   const navigationType = useNavigationType();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { searchTerm, offset, isActive, selectedCategoryId } = productListContext(searchParams);
+  const { searchTerm, offset, isActive, selectedCategoryId, stockStatus } = productListContext(searchParams);
   const [searchInput, setSearchInput] = useState(searchTerm);
   const searchTimer = useRef(null);
   const appliedSearch = useRef(searchTerm);
   const searchParamsRef = useRef(searchParams);
   searchParamsRef.current = searchParams;
-  const changeQuery = (changes) => {
+  const changeQuery = (changes, replace = true) => {
     const next = updateProductListQuery(searchParamsRef.current, changes);
     searchParamsRef.current = next;
-    setSearchParams(next, { replace: true });
+    setSearchParams(next, { replace });
   };
   const changeQueryRef = useRef(changeQuery);
   changeQueryRef.current = changeQuery;
@@ -89,6 +89,7 @@ export default function ProductList() {
         searchTerm,
         category_id: selectedCategoryId,
         is_active: isActive,
+        stock_status: stockStatus,
       });
       if (version !== requestVersion.current) return;
       if (offset > 0 && offset >= total) {
@@ -103,7 +104,7 @@ export default function ProductList() {
     } finally {
       if (version === requestVersion.current) setIsLoading(false);
     }
-  }, [accessToken, offset, searchTerm, selectedCategoryId, isActive, searchParams, setSearchParams]);
+  }, [accessToken, offset, searchTerm, selectedCategoryId, isActive, stockStatus, searchParams, setSearchParams]);
 
   useEffect(() => {
     fetchProducts();
@@ -165,7 +166,8 @@ export default function ProductList() {
                   filters: {
                     searchTerm,
                     category_id: selectedCategoryId,
-                    is_active: isActive,
+                    isActive,
+                    stockStatus,
                   },
                 });
               }}
@@ -194,6 +196,19 @@ export default function ProductList() {
               })),
             ]}
           /> : <ProductCategoryFeedback categories={categories} />}
+
+          <SelectFilter
+            label={t("products.stockStatus")}
+            value={stockStatus}
+            onChange={(e) => {
+              changeQuery({ stock_status: e.target.value, offset: 0 }, false);
+            }}
+            options={[
+              { value: "", label: t("products.allProducts") },
+              { value: "in_stock", label: t("products.inStock") },
+              { value: "out_of_stock", label: t("products.outOfStock") },
+            ]}
+          />
 
           <SelectFilter
             label={t("common.status")}

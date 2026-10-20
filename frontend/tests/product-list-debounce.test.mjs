@@ -24,6 +24,7 @@ before(async () => {
         if (id === "\0virtual:product-list-auth") return "export const useAuth = () => globalThis.__productListFixture.auth;";
         if (id === "\0virtual:product-list-categories") return "export const useProductCategories = () => globalThis.__productListFixture.categories;";
         if (id === "\0virtual:product-list-api") return "export const getProducts = (...args) => globalThis.__productListFixture.getProducts(...args); export const productBulkStatus = () => {};";
+        if (id === "\0virtual:product-list-export") return "export const exportFilteredProductsCSV = (...args) => globalThis.__productListFixture.exportFilteredProductsCSV(...args);";
         if (id.startsWith("\0virtual:product-list-component-")) {
           const name = id.slice("\0virtual:product-list-component-".length);
           return `export default function ${name}() {}`;
@@ -37,6 +38,7 @@ before(async () => {
           .replace('from "../context/useAuth"', 'from "virtual:product-list-auth"')
           .replace('from "../hooks/useProductCategories.js"', 'from "virtual:product-list-categories"')
           .replace('from "../api/products"', 'from "virtual:product-list-api"')
+          .replace('from "../utils/export"', 'from "virtual:product-list-export"')
           .replace(/from "\.\.\/components\/([A-Za-z]+)"/g, 'from "virtual:product-list-component-$1"')
           .replaceAll("setTimeout(", "globalThis.__productListFixture.schedule(")
           .replaceAll("clearTimeout(", "globalThis.__productListFixture.cancel(");
@@ -53,7 +55,7 @@ after(async () => {
 });
 
 function createFixture(initialSearch = "") {
-  const slots = [], effects = [], requests = [], timers = new Map();
+  const slots = [], effects = [], requests = [], exports = [], historyUpdates = [], timers = new Map();
   let cursor = 0, dirty = true, tree, nextKey = 0, nextTimer = 0, now = 0;
   const router = {
     params: new URLSearchParams(initialSearch), type: "POP",
@@ -93,7 +95,7 @@ function createFixture(initialSearch = "") {
         const captured = router.params;
         router.setterParams = captured;
         router.setter = (next, options) => {
-          assert.equal(options.replace, true);
+          historyUpdates.push({ replace: options.replace });
           router.params = new URLSearchParams(typeof next === "function" ? next(captured) : next);
           router.type = "REPLACE";
           router.location = { ...router.location, search: `?${router.params}`, key: String(++nextKey) };
@@ -105,6 +107,7 @@ function createFixture(initialSearch = "") {
     getProducts(args) {
       return new Promise((resolve) => requests.push({ args, resolve }));
     },
+    exportFilteredProductsCSV(args) { exports.push(args); },
     schedule(callback, delay) {
       assert.equal(delay, 400);
       const id = ++nextTimer;
@@ -122,6 +125,8 @@ function createFixture(initialSearch = "") {
   render();
   return {
     requests,
+    exports,
+    historyUpdates,
     get url() { return router.params; },
     get pendingTimers() { return timers.size; },
     get(type) {
@@ -131,6 +136,7 @@ function createFixture(initialSearch = "") {
         if (!node || typeof node !== "object") return;
         if (node.type?.name === type) found.push(node.props);
         visit(node.props?.children);
+        visit(node.props?.extraContent);
       }
       visit(tree);
       return found;
@@ -189,7 +195,7 @@ test("pending search retains immediate category and status changes, and clearing
     page.get("SearchInput")[0].onChange({ target: { value: "new" } });
     await page.settle();
     page.get("SelectFilter")[0].onChange({ target: { value: "1" } });
-    page.get("SelectFilter")[1].onChange({ target: { value: "false" } });
+    page.get("SelectFilter")[2].onChange({ target: { value: "false" } });
     await page.settle();
     assert.equal(page.get("SearchInput")[0].value, "new");
     assert.equal(page.requests.at(-1).args.searchTerm, "old");
@@ -205,6 +211,38 @@ test("pending search retains immediate category and status changes, and clearing
     assert.equal(page.pendingTimers, 0);
     assert.equal(page.requests.at(-1).args.searchTerm, "");
     assert.equal(page.url.has("search"), false);
+  } finally { page.stop(); }
+});
+
+test("stock selection creates history, resets offset, restores on Back/Forward, and reaches CSV", async () => {
+  const original = "?search=old&category_id=1&is_active=false&offset=20";
+  const page = createFixture(original);
+  try {
+    await page.settle();
+    page.resolve(0); await page.settle();
+    const stockFilter = page.get("SelectFilter")[1];
+    assert.deepEqual(stockFilter.options.map((option) => option.value), ["", "in_stock", "out_of_stock"]);
+    stockFilter.onChange({ target: { value: "out_of_stock" } });
+    await page.settle();
+    assert.equal(page.historyUpdates.at(-1).replace, false);
+    assert.equal(page.url.get("stock_status"), "out_of_stock");
+    assert.equal(page.url.has("offset"), false);
+    assert.equal(page.requests.at(-1).args.stock_status, "out_of_stock");
+    assert.equal(page.requests.at(-1).args.searchTerm, "old");
+    assert.equal(page.requests.at(-1).args.category_id, "1");
+    assert.equal(page.requests.at(-1).args.is_active, "false");
+    page.get("ExportCSVButton")[0].onExport();
+    assert.deepEqual(page.exports[0].filters, {
+      searchTerm: "old", category_id: "1", isActive: "false", stockStatus: "out_of_stock",
+    });
+
+    const filtered = `?${page.url}`;
+    page.pop(original); await page.settle();
+    assert.equal(page.get("SelectFilter")[1].value, "");
+    assert.equal(page.requests.at(-1).args.stock_status, "");
+    page.pop(filtered); await page.settle();
+    assert.equal(page.get("SelectFilter")[1].value, "out_of_stock");
+    assert.equal(page.requests.at(-1).args.stock_status, "out_of_stock");
   } finally { page.stop(); }
 });
 

@@ -6,6 +6,7 @@ export function productListContext(search) {
     searchTerm: params.get("search") || "",
     selectedCategoryId: /^[1-9]\d*$/.test(category) ? category : "",
     isActive: ["true", "false"].includes(params.get("is_active")) ? params.get("is_active") : "",
+    stockStatus: ["in_stock", "out_of_stock"].includes(params.get("stock_status")) ? params.get("stock_status") : "",
     offset: Number.isSafeInteger(offset) && offset >= 0 ? offset : 0,
   };
 }

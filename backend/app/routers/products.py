@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Literal, Optional
 from app.models.product_category import ProductCategory
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import func, select
@@ -29,6 +29,7 @@ async def get_products(
     search: Optional[str] = Query(None),
     category_id: Optional[int] = Query(None),
     is_active: Optional[bool] = Query(None),
+    stock_status: Optional[Literal["in_stock", "out_of_stock"]] = Query(None),
 ):
     """Returns a paginated list of products.
     - An **admin** can see all products (active and inactive).
@@ -57,6 +58,16 @@ async def get_products(
             statement = statement.where(Product.is_active == True)
         elif is_active is not None:
             statement = statement.where(Product.is_active == is_active)
+
+        if stock_status is not None:
+            has_positive_stock = (
+                select(Stock.product_id)
+                .where(Stock.product_id == Product.id, Stock.quantity > 0)
+                .exists()
+            )
+            statement = statement.where(
+                has_positive_stock if stock_status == "in_stock" else ~has_positive_stock
+            )
 
         # Paginated and ordered query
         products_raw = await db.execute(

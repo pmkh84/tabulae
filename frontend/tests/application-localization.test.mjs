@@ -271,13 +271,27 @@ test("CSV exports localize headers/status/date and preserve raw stored values/nu
   globalThis.document = { body: { appendChild() {}, removeChild() {} }, createElement() { return { setAttribute() {}, click() {} }; } };
   URL.createObjectURL = (value) => { blob = value; return "blob:fixture"; };
   try {
-    globalThis.fetch = async () => jsonResponse({ data: [{ sku: "SKU001", short_name: "Raw Product", category_name: "Raw Category", is_active: true }] });
-    await exports.exportFilteredProductsCSV({ accessToken: "fixture-token", apiUrl: "http://example.test", filters: {} });
+    let productExportUrl;
+    globalThis.fetch = async (input) => {
+      productExportUrl = new URL(input);
+      return jsonResponse({ data: [{ sku: "SKU001", short_name: "Raw Product", category_name: "Raw Category", is_active: true }] });
+    };
+    await exports.exportFilteredProductsCSV({
+      accessToken: "fixture-token", apiUrl: "http://example.test",
+      filters: { searchTerm: "Raw", category_id: "3", isActive: "false", stockStatus: "out_of_stock" },
+    });
+    assert.equal(productExportUrl.searchParams.get("search"), "Raw");
+    assert.equal(productExportUrl.searchParams.get("category_id"), "3");
+    assert.equal(productExportUrl.searchParams.get("is_active"), "false");
+    assert.equal(productExportUrl.searchParams.get("stock_status"), "out_of_stock");
     const bytes = Buffer.from(await blob.arrayBuffer());
     assert.deepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf]);
     const csv = bytes.toString("utf8");
     assert.match(csv, /کد محصول \(SKU\);نام;دسته‌بندی;وضعیت/);
     assert.match(csv, /SKU001;Raw Product;Raw Category;فعال/);
+    await exports.exportFilteredProductsCSV({ accessToken: "fixture-token", apiUrl: "http://example.test", filters: { searchTerm: " " } });
+    assert.equal(productExportUrl.searchParams.get("search"), " ");
+    assert.equal(productExportUrl.searchParams.has("stock_status"), false);
     globalThis.fetch = async () => jsonResponse({ data: [{ id: 7, move_type: "outgoing", user_name: "Raw User", created_at: "2024-03-20T00:30:00+03:30", lines: [{}, {}] }] });
     await exports.exportFilteredMovementsCSV({ accessToken: "fixture-token", apiUrl: "http://example.test", filters: {} });
     const movementCSV = Buffer.from(await blob.arrayBuffer()).toString("utf8");

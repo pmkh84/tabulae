@@ -97,6 +97,103 @@ async def test_pagination_works_on_product_list(client, session):
 
 
 @pytest.mark.asyncio
+async def test_stock_status_filters_all_warehouses_and_lots(client, session):
+    headers, _ = await get_admin_headers(client, session)
+    category = ProductCategory(name="Availability")
+    warehouses = [Warehouse(name="Stock WH 1"), Warehouse(name="Stock WH 2")]
+    session.add_all([category, *warehouses])
+    await session.commit()
+
+    products = [
+        Product(sku="AVAIL1", short_name="A Positive", category_id=category.id),
+        Product(sku="AVAIL2", short_name="B Positive", category_id=category.id),
+        Product(sku="AVAIL3", short_name="C Zero", category_id=category.id),
+        Product(sku="AVAIL4", short_name="D No Rows", category_id=category.id),
+    ]
+    session.add_all(products)
+    await session.commit()
+    session.add_all([
+        Stock(product_id=products[0].id, warehouse_id=warehouses[0].id, lot="A", quantity=0),
+        Stock(product_id=products[0].id, warehouse_id=warehouses[1].id, lot="B", quantity=3),
+        Stock(product_id=products[1].id, warehouse_id=warehouses[0].id, lot="A", quantity=2),
+        Stock(product_id=products[1].id, warehouse_id=warehouses[1].id, lot="B", quantity=4),
+        Stock(product_id=products[2].id, warehouse_id=warehouses[0].id, lot="A", quantity=0),
+        Stock(product_id=products[2].id, warehouse_id=warehouses[1].id, lot="B", quantity=0),
+    ])
+    await session.commit()
+
+    expected = {
+        None: (4, ["AVAIL1", "AVAIL2", "AVAIL3", "AVAIL4"]),
+        "in_stock": (2, ["AVAIL1", "AVAIL2"]),
+        "out_of_stock": (2, ["AVAIL3", "AVAIL4"]),
+    }
+    for stock_status, (total, skus) in expected.items():
+        params = {} if stock_status is None else {"stock_status": stock_status}
+        response = await client.get("/products/", params=params, headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total"] == total
+        assert [product["sku"] for product in data["data"]] == skus
+
+    response = await client.get(
+        "/products/", params={"stock_status": "in_stock", "limit": 1, "offset": 1}, headers=headers
+    )
+    assert response.status_code == 200
+    assert response.json()["total"] == 2
+    assert response.json()["limit"] == 1
+    assert response.json()["offset"] == 1
+    assert [product["sku"] for product in response.json()["data"]] == ["AVAIL2"]
+
+
+@pytest.mark.asyncio
+async def test_stock_status_combines_with_existing_filters_and_permissions(client, session):
+    admin_headers, _ = await get_admin_headers(client, session)
+    categories = [ProductCategory(name="Availability A"), ProductCategory(name="Availability B")]
+    warehouse = Warehouse(name="Filter WH")
+    session.add_all([*categories, warehouse])
+    await session.commit()
+    products = [
+        Product(sku="MATCH1", short_name="Match Active", category_id=categories[0].id),
+        Product(sku="MATCH2", short_name="Match Inactive", category_id=categories[0].id, is_active=False),
+        Product(sku="MATCH3", short_name="Match Other Category", category_id=categories[1].id),
+        Product(sku="OTHER1", short_name="Other Active", category_id=categories[0].id),
+    ]
+    session.add_all(products)
+    await session.commit()
+    session.add_all([
+        Stock(product_id=products[0].id, warehouse_id=warehouse.id, lot="A", quantity=1),
+        Stock(product_id=products[1].id, warehouse_id=warehouse.id, lot="B", quantity=1),
+        Stock(product_id=products[2].id, warehouse_id=warehouse.id, lot="C", quantity=1),
+    ])
+    await session.commit()
+
+    params = {
+        "stock_status": "in_stock", "search": "match", "category_id": categories[0].id,
+        "is_active": "false",
+    }
+    response = await client.get("/products/", params=params, headers=admin_headers)
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert [product["sku"] for product in response.json()["data"]] == ["MATCH2"]
+
+    user = await create_user_in_db(session, "availability_user", "availability@example.com", "pass", is_active=True)
+    token = await get_token_for_user(client, user.email, "pass")
+    user_headers = get_auth_headers(token)
+    response = await client.get("/products/", params=params, headers=user_headers)
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+    assert [product["sku"] for product in response.json()["data"]] == ["MATCH1"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stock_status", ["unknown", "IN_STOCK", ""])
+async def test_invalid_stock_status_returns_422(client, session, stock_status):
+    headers, _ = await get_admin_headers(client, session)
+    response = await client.get("/products/", params={"stock_status": stock_status}, headers=headers)
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_search_filters_by_name_or_sku(client, session):
     """Ensure search by short_name or SKU works (case-insensitive)"""
     headers, _ = await get_admin_headers(client, session)
