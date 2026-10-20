@@ -109,23 +109,18 @@ BEGIN
     -- If it's an outgoing movement, decrease stock quantity
     ELSIF move_type_value = 'outgoing' THEN
 
-        -- Check if there is enough stock before subtracting
-        IF (SELECT quantity FROM "stock" WHERE warehouse_id = NEW.warehouse_id 
-                                        AND product_id = NEW.product_id
-                                        AND lot = processed_lot) < NEW.quantity OR 
-           (SELECT COUNT(*) FROM "stock" WHERE warehouse_id = NEW.warehouse_id 
-                                        AND product_id = NEW.product_id
-                                        AND lot = processed_lot) = 0 THEN
+        -- Lock and recheck the matching row in one atomic deduction.
+        UPDATE "stock"
+        SET quantity = quantity - NEW.quantity
+        WHERE warehouse_id = NEW.warehouse_id
+          AND product_id = NEW.product_id
+          AND lot = processed_lot
+          AND quantity >= NEW.quantity;
+
+        IF NOT FOUND THEN
             RAISE EXCEPTION 'Insufficient stock for product % in warehouse % with lot %', 
                             NEW.product_id, NEW.warehouse_id, processed_lot;
         END IF;
-
-        -- Subtract the quantity from stock
-        UPDATE "stock"
-        SET quantity = GREATEST(0, quantity - NEW.quantity)
-        WHERE warehouse_id = NEW.warehouse_id 
-          AND product_id = NEW.product_id
-          AND lot = processed_lot;
     END IF;
 
     RETURN NEW;
