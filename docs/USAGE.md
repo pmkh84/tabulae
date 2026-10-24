@@ -69,9 +69,9 @@ If the credentials are valid and your user is active, you will be redirected to 
 
 | Name        | Email               | Password        | Role  | Status   |
 | ----------- | ------------------- | --------------- | ----- | -------- |
-| Alice Smith | alice@example.com   | alice_example   | Admin | Active   |
-| Bob Johnson | bob@example.com     | bob_example     | User  | Active   |
-| Charlie Lee | charlie@example.com | charlie_example | User  | Inactive |
+| آلیس اسمیت  | alice@example.com   | alice_example   | Admin | Active   |
+| باب جانسون  | bob@example.com     | bob_example     | User  | Active   |
+| چارلی لی    | charlie@example.com | charlie_example | User  | Inactive |
 
 > You can use these accounts for testing.
 

@@ -3,21 +3,21 @@ INSERT INTO
     "user" (name, email, password, role, is_active)
 VALUES
     (
-        'Alice Smith',
+        'آلیس اسمیت',
         'alice@example.com',
         '$2a$12$h1YMx6rEJDJ6atDWydlVGObCgOPfrgB5YxGgLE1fqm3/ebWmGkMRm',
         'admin',
         true
     ),
     (
-        'Bob Johnson',
+        'باب جانسون',
         'bob@example.com',
         '$2a$12$OC4NtH.0NnLnJLLjNvUA2uRg34dgKVN8li3Zi8aBtDDLYI8rPY2ba',
         'user',
         true
     ),
     (
-        'Charlie Lee',
+        'چارلی لی',
         'charlie@example.com',
         '$2a$12$TCXanIk6qWqB79Byedo3SOE91oU3VVpA5mDBbdIvRWqGhY8Xd8/g.',
         'user',
@@ -28,20 +28,20 @@ VALUES
 INSERT INTO
     warehouse (name, is_active)
 VALUES
-    ('Main Warehouse', TRUE),
-    ('North Store', TRUE),
-    ('City Center Store', TRUE),
-    ('South Outlet', FALSE);
+    ('انبار مرکزی', TRUE),
+    ('فروشگاه شمال', TRUE),
+    ('فروشگاه مرکز شهر', TRUE),
+    ('شعبهٔ جنوب', FALSE);
 
 -- Product Categories
 INSERT INTO
     product_category (name)
 VALUES
-    ('Video Games'),
-    ('Books'),
-    ('Collectible Figures'),
-    ('Board Games'),
-    ('Merchandise');
+    ('بازی‌های ویدئویی'),
+    ('کتاب‌ها'),
+    ('فیگورهای کلکسیونی'),
+    ('بازی‌های رومیزی'),
+    ('محصولات جانبی');
 
 INSERT INTO
     product (
@@ -53,211 +53,211 @@ INSERT INTO
     )
 VALUES
     (
-        'Zelda: Breath of the Wild',
-        'Action-adventure game for Nintendo Switch',
+        'زلدا: نفس وحش',
+        'بازی اکشن و ماجراجویی برای نینتندو سوییچ',
         'ZELDA01',
         1,
         TRUE
     ),
     (
-        'God of War Ragnarök',
-        'Action game for PlayStation 5',
+        'خدای جنگ: رگناروک',
+        'بازی اکشن برای پلی‌استیشن ۵',
         'GOWR01',
         1,
         TRUE
     ),
     (
-        '1984 by George Orwell',
-        'Dystopian novel',
+        '۱۹۸۴، اثر جورج اورول',
+        'رمانی پادآرمان‌شهری',
         'BOOK01',
         2,
         TRUE
     ),
     (
-        'The Magic Book Vol. 1',
-        'Fantasy book for young readers',
+        'کتاب جادویی، جلد ۱',
+        'کتابی فانتزی برای نوجوانان',
         'BOOK02',
         2,
         TRUE
     ),
     (
-        'Iron Hero Funko Figure',
-        'Limited edition collectible figure',
+        'فیگور فانکو قهرمان آهنی',
+        'فیگور کلکسیونی با تولید محدود',
         'FIG01',
         3,
         TRUE
     ),
     (
-        '1000-piece Puzzle',
-        'Board game for the whole family',
+        'پازل ۱۰۰۰ تکه',
+        'سرگرمی رومیزی برای همهٔ اعضای خانواده',
         'BOARD01',
         4,
         TRUE
     ),
     (
-        'Retro Game T-Shirt M',
-        'Official themed T-shirt',
+        'تی‌شرت بازی رترو، سایز M',
+        'تی‌شرت رسمی با طرح بازی',
         'MERCH01',
         5,
         TRUE
     ),
     (
-        'Football League 2024',
-        'Multiplatform football video game',
+        'لیگ فوتبال ۲۰۲۴',
+        'بازی ویدئویی فوتبال برای چند پلتفرم',
         'FOOT24',
         1,
         TRUE
     ),
     (
-        'The Little Prince',
-        'Illustrated children’s book',
+        'شازده کوچولو',
+        'کتاب مصور کودکان',
         'BOOK03',
         2,
         TRUE
     ),
     (
-        'Wooden Chess Set',
-        'Classic strategy board game',
+        'مجموعه شطرنج چوبی',
+        'بازی رومیزی راهبردی کلاسیک',
         'CHESS01',
         4,
         TRUE
     ),
     (
-        'Hogwarts Hoodie L',
-        'Official fantasy-themed hoodie',
+        'هودی هاگوارتز، سایز L',
+        'هودی رسمی با طرح فانتزی',
         'MERCH02',
         5,
         TRUE
     ),
     (
-        'Grogu Funko Figure',
-        'Collectible figure from space series',
+        'فیگور فانکو گروگو',
+        'فیگور کلکسیونی از مجموعه‌ای فضایی',
         'FIG02',
         3,
         TRUE
     ),
     (
-        'Catan',
-        'Strategy board game',
+        'کاتان',
+        'بازی رومیزی راهبردی',
         'BOARD02',
         4,
         TRUE
     ),
     (
-        'Adventure Poster',
-        'Decorative fantasy-themed poster',
+        'پوستر ماجراجویی',
+        'پوستر تزئینی با طرح فانتزی',
         'MERCH03',
         5,
         TRUE
     ),
     (
-        'Spider Hero 2',
-        'PlayStation 5 exclusive action game',
+        'قهرمان عنکبوتی ۲',
+        'بازی اکشن انحصاری پلی‌استیشن ۵',
         'SPIDER02',
         1,
         TRUE
     ),
     (
-        'Limited Edition Trading Card',
-        'Collectible card with special ink',
+        'کارت کلکسیونی نسخه محدود',
+        'کارت کلکسیونی با چاپ ویژه',
         'CARD01',
         3,
         TRUE
     ),
     (
-        'Monthly Manga Magazine',
-        'Serialized manga issue',
+        'مجله ماهانه مانگا',
+        'شماره‌ای از مانگای دنباله‌دار',
         'MANGA01',
         2,
         TRUE
     ),
     (
-        'Trading Card Starter Pack',
-        'Beginner set for collectible card game',
+        'بسته آغازین کارت‌های کلکسیونی',
+        'مجموعه آغازین بازی با کارت‌های کلکسیونی',
         'CARDPACK01',
         4,
         TRUE
     ),
     (
-        'Zelda-themed Chewing Gum',
-        'Promotional edible product',
+        'آدامس با طرح زلدا',
+        'خوراکی تبلیغاتی',
         'GUM01',
         5,
         TRUE
     ),
     (
-        'Surprise Box',
-        'Random contents with expiration date',
+        'جعبه شگفتی',
+        'جعبه‌ای با محتویات تصادفی و تاریخ انقضا',
         'BOX01',
         5,
         TRUE
     ),
     (
-        'Mario Edible Figure',
-        'Cake topper with expiration',
+        'فیگور خوراکی ماریو',
+        'تزئین خوراکی کیک با تاریخ انقضا',
         'FOODFIG01',
         3,
         TRUE
     ),
     (
-        'Geek Popcorn',
-        'Limited edition themed snack',
+        'پاپ‌کورن گیک',
+        'میان‌وعده با طرح ویژه و تولید محدود',
         'SNACK01',
         5,
         TRUE
     ),
     (
-        '2024 Fantasy Agenda',
-        'Agenda with limited duration',
+        'سررسید فانتزی ۲۰۲۴',
+        'سررسید با دورهٔ استفاده محدود',
         'AGENDA01',
         2,
         TRUE
     ),
     (
-        'Energy Drink – Lightning Edition',
-        'Promo energy drink with expiration date',
+        'نوشیدنی انرژی‌زا، نسخه صاعقه',
+        'نوشیدنی انرژی‌زای تبلیغاتی با تاریخ انقضا',
         'ENERGY01',
         5,
         TRUE
     ),
     (
-        'Card Pack – Duel Series',
-        'Sealed collectible card product',
+        'بسته کارت، مجموعه دوئل',
+        'بسته پلمب‌شده کارت‌های کلکسیونی',
         'DUEL01',
         3,
         TRUE
     ),
     (
-        'Collector’s Manual 2023',
-        'Physical guide with limited content',
+        'راهنمای کلکسیونرها ۲۰۲۳',
+        'راهنمای چاپی با محتوای محدود',
         'GUIDE01',
         2,
         TRUE
     ),
     (
-        'One Piece Snack',
-        'Geek-themed snack product',
+        'میان‌وعده وان‌پیس',
+        'میان‌وعده با طرح فرهنگ گیک',
         'SNACK02',
         5,
         TRUE
     ),
     (
-        'Special Edition Magazine',
-        'Exclusive release with publication date',
+        'مجله نسخه ویژه',
+        'شماره ویژه با تاریخ انتشار',
         'MAG01',
         2,
         TRUE
     ),
     (
-        'Promotional Metal Tin',
-        'Collectible tin with candy inside',
+        'قوطی فلزی تبلیغاتی',
+        'قوطی کلکسیونی حاوی آب‌نبات',
         'TIN01',
         5,
         TRUE
     ),
     (
-        'Holiday Gift Box',
-        'Seasonal limited-time product',
+        'جعبه هدیه تعطیلات',
+        'محصول فصلی با عرضه محدود',
         'HOLIDAY01',
         5,
         TRUE
