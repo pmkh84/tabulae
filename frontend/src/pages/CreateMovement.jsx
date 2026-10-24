@@ -16,7 +16,7 @@ import { getAvailableLots } from "../api/stock";
 
 export default function CreateMovement() {
   const [loadError, setLoadError] = useState("");
-  const { accessToken, user } = useAuth();
+  const { accessToken } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
